@@ -1,8 +1,7 @@
-import { Radio, RadioGroup } from "@mui/joy";
+import { Dropdown, Menu, MenuButton, MenuItem, Radio, RadioGroup } from "@mui/joy";
 import { Button, Input } from "@usememos/mui";
 import { sortBy } from "lodash-es";
 import { MoreVerticalIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { userServiceClient } from "@/grpcweb";
@@ -11,14 +10,13 @@ import { userStore } from "@/store/v2";
 import { State } from "@/types/proto/api/v1/common";
 import { User, User_Role } from "@/types/proto/api/v1/user_service";
 import { useTranslate } from "@/utils/i18n";
-import showCreateUserDialog from "../CreateUserDialog";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/Popover";
+import showChangeMemberPasswordDialog from "../ChangeMemberPasswordDialog";
 
 interface LocalState {
   creatingUser: User;
 }
 
-const MemberSection = observer(() => {
+const MemberSection = () => {
   const t = useTranslate();
   const currentUser = useCurrentUser();
   const [state, setState] = useState<LocalState>({
@@ -108,8 +106,12 @@ const MemberSection = observer(() => {
     });
   };
 
+  const handleChangePasswordClick = (user: User) => {
+    showChangeMemberPasswordDialog(user);
+  };
+
   const handleArchiveUserClick = async (user: User) => {
-    const confirmed = window.confirm(t("setting.member-section.archive-warning", { username: user.displayName }));
+    const confirmed = window.confirm(t("setting.member-section.archive-warning", { username: user.nickname }));
     if (confirmed) {
       await userServiceClient.updateUser({
         user: {
@@ -134,7 +136,7 @@ const MemberSection = observer(() => {
   };
 
   const handleDeleteUserClick = async (user: User) => {
-    const confirmed = window.confirm(t("setting.member-section.delete-warning", { username: user.displayName }));
+    const confirmed = window.confirm(t("setting.member-section.delete-warning", { username: user.nickname }));
     if (confirmed) {
       await userStore.deleteUser(user.name);
       fetchUsers();
@@ -144,7 +146,7 @@ const MemberSection = observer(() => {
   return (
     <div className="w-full flex flex-col gap-2 pt-2 pb-4">
       <p className="font-medium text-gray-700 dark:text-gray-500">{t("setting.member-section.create-a-member")}</p>
-      <div className="w-auto flex flex-col justify-start items-start gap-2 border border-zinc-200 rounded-md py-2 px-3 dark:border-zinc-700">
+      <div className="w-auto flex flex-col justify-start items-start gap-2 border rounded-md py-2 px-3 dark:border-zinc-700">
         <div className="flex flex-col justify-start items-start gap-1">
           <span>{t("common.username")}</span>
           <Input
@@ -182,7 +184,7 @@ const MemberSection = observer(() => {
         <div className="title-text">{t("setting.member-list")}</div>
       </div>
       <div className="w-full overflow-x-auto">
-        <div className="inline-block min-w-full align-middle border border-zinc-200 rounded-lg dark:border-zinc-600">
+        <div className="inline-block min-w-full align-middle border rounded-lg dark:border-zinc-600">
           <table className="min-w-full divide-y divide-gray-300 dark:divide-zinc-600">
             <thead>
               <tr className="text-sm font-semibold text-left text-gray-900 dark:text-gray-400">
@@ -209,52 +211,30 @@ const MemberSection = observer(() => {
                     <span className="ml-1 italic">{user.state === State.ARCHIVED && "(Archived)"}</span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{stringifyUserRole(user.role)}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{user.displayName}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{user.nickname}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                   <td className="relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium flex justify-end">
                     {currentUser?.name === user.name ? (
                       <span>{t("common.yourself")}</span>
                     ) : (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="flex items-center justify-center p-1 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded">
-                            <MoreVerticalIcon className="w-4 h-auto" />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent align="end" sideOffset={2}>
-                          <div className="flex flex-col gap-0.5 text-sm">
-                            <button
-                              onClick={() => showCreateUserDialog(user, () => fetchUsers())}
-                              className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                            >
-                              {t("common.update")}
-                            </button>
-                            {user.state === State.NORMAL ? (
-                              <button
-                                onClick={() => handleArchiveUserClick(user)}
-                                className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                              >
-                                {t("setting.member-section.archive-member")}
-                              </button>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => handleRestoreUserClick(user)}
-                                  className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                                >
-                                  {t("common.restore")}
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteUserClick(user)}
-                                  className="flex items-center gap-2 px-2 py-1 text-left text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                                >
-                                  {t("setting.member-section.delete-member")}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <Dropdown>
+                        <MenuButton size="sm">
+                          <MoreVerticalIcon className="w-4 h-auto" />
+                        </MenuButton>
+                        <Menu placement="bottom-end" size="sm">
+                          <MenuItem onClick={() => handleChangePasswordClick(user)}>
+                            {t("setting.account-section.change-password")}
+                          </MenuItem>
+                          {user.state === State.NORMAL ? (
+                            <MenuItem onClick={() => handleArchiveUserClick(user)}>{t("setting.member-section.archive-member")}</MenuItem>
+                          ) : (
+                            <>
+                              <MenuItem onClick={() => handleRestoreUserClick(user)}>{t("common.restore")}</MenuItem>
+                              <MenuItem onClick={() => handleDeleteUserClick(user)}>{t("setting.member-section.delete-member")}</MenuItem>
+                            </>
+                          )}
+                        </Menu>
+                      </Dropdown>
                     )}
                   </td>
                 </tr>
@@ -265,6 +245,6 @@ const MemberSection = observer(() => {
       </div>
     </div>
   );
-});
+};
 
 export default MemberSection;

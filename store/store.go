@@ -1,46 +1,27 @@
 package store
 
 import (
-	"time"
+	"sync"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/store/cache"
+	"github.com/usememos/memos/server/profile"
 )
 
 // Store provides database access to all raw objects.
 type Store struct {
-	profile *profile.Profile
-	driver  Driver
-
-	// Cache settings
-	cacheConfig cache.Config
-
-	// Caches
-	workspaceSettingCache *cache.Cache // cache for workspace settings
-	userCache             *cache.Cache // cache for users
-	userSettingCache      *cache.Cache // cache for user settings
+	Profile               *profile.Profile
+	driver                Driver
+	workspaceSettingCache sync.Map // map[string]*storepb.WorkspaceSetting
+	userCache             sync.Map // map[int]*User
+	userSettingCache      sync.Map // map[string]*storepb.UserSetting
+	idpCache              sync.Map // map[int]*storepb.IdentityProvider
 }
 
 // New creates a new instance of Store.
 func New(driver Driver, profile *profile.Profile) *Store {
-	// Default cache settings
-	cacheConfig := cache.Config{
-		DefaultTTL:      10 * time.Minute,
-		CleanupInterval: 5 * time.Minute,
-		MaxItems:        1000,
-		OnEviction:      nil,
+	return &Store{
+		driver:  driver,
+		Profile: profile,
 	}
-
-	store := &Store{
-		driver:                driver,
-		profile:               profile,
-		cacheConfig:           cacheConfig,
-		workspaceSettingCache: cache.New(cacheConfig),
-		userCache:             cache.New(cacheConfig),
-		userSettingCache:      cache.New(cacheConfig),
-	}
-
-	return store
 }
 
 func (s *Store) GetDriver() Driver {
@@ -48,10 +29,5 @@ func (s *Store) GetDriver() Driver {
 }
 
 func (s *Store) Close() error {
-	// Stop all cache cleanup goroutines
-	s.workspaceSettingCache.Close()
-	s.userCache.Close()
-	s.userSettingCache.Close()
-
 	return s.driver.Close()
 }

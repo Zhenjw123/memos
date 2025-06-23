@@ -29,7 +29,7 @@ func GetImage(urlStr string) (*Image, error) {
 		return nil, err
 	}
 	if !strings.HasPrefix(mediatype, "image/") {
-		return nil, errors.New("wrong image mediatype")
+		return nil, errors.New("Wrong image mediatype")
 	}
 
 	bodyBytes, err := io.ReadAll(response.Body)

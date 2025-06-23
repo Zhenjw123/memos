@@ -1,4 +1,4 @@
-name: Backend Tests
+name: Backend Test
 
 on:
   push:
@@ -26,9 +26,9 @@ jobs:
           go mod tidy -go=1.24
           git diff --exit-code
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v2.1.6
+          version: v1.64.5
           args: --verbose --timeout=3m
           skip-cache: true
 

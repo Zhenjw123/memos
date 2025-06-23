@@ -4,11 +4,10 @@ import { cn } from "@/utils";
 
 interface Props {
   visibility: Visibility;
-  className?: string;
 }
 
 const VisibilityIcon = (props: Props) => {
-  const { className, visibility } = props;
+  const { visibility } = props;
 
   let VIcon = null;
   if (visibility === Visibility.PRIVATE) {
@@ -22,7 +21,7 @@ const VisibilityIcon = (props: Props) => {
     return null;
   }
 
-  return <VIcon className={cn("w-4 h-auto text-gray-500 dark:text-gray-400", className)} />;
+  return <VIcon className={cn("w-4 h-auto text-gray-500 dark:text-gray-400")} />;
 };
 
 export default VisibilityIcon;

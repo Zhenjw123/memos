@@ -1,13 +1,11 @@
 import copy from "copy-to-clipboard";
 import { ArrowUpRightIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
 import { useContext, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-import MemoAttachmentListView from "@/components/MemoAttachmentListView";
+import MemoResourceListView from "@/components/MemoResourceListView";
 import useLoading from "@/hooks/useLoading";
-import { extractMemoIdFromName } from "@/store/common";
-import { memoStore } from "@/store/v2";
+import { extractMemoIdFromName, useMemoStore } from "@/store/v1";
 import { cn } from "@/utils";
 import MemoContent from "..";
 import { RendererContext } from "../types";
@@ -18,9 +16,10 @@ interface Props {
   params: string;
 }
 
-const EmbeddedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) => {
+const EmbeddedMemo = ({ resourceId: uid, params: paramsStr }: Props) => {
   const context = useContext(RendererContext);
   const loadingState = useLoading();
+  const memoStore = useMemoStore();
   const memoName = `memos/${uid}`;
   const memo = memoStore.getMemoByName(memoName);
 
@@ -54,7 +53,7 @@ const EmbeddedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) =>
         nodes={memo.nodes}
         embeddedMemos={context.embeddedMemos}
       />
-      <MemoAttachmentListView attachments={memo.attachments} />
+      <MemoResourceListView resources={memo.resources} />
     </>
   );
   if (inlineMode) {
@@ -67,7 +66,7 @@ const EmbeddedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) =>
   };
 
   return (
-    <div className="relative flex flex-col justify-start items-start w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:shadow">
+    <div className="relative flex flex-col justify-start items-start w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 hover:shadow">
       <div className="w-full mb-1 flex flex-row justify-between items-center text-gray-400 dark:text-gray-500">
         <div className="text-sm leading-5 select-none">
           <relative-time datetime={memo.displayTime?.toISOString()} format="datetime"></relative-time>
@@ -87,6 +86,6 @@ const EmbeddedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) =>
       {contentNode}
     </div>
   );
-});
+};
 
 export default EmbeddedMemo;

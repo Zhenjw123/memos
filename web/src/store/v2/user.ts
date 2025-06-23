@@ -1,10 +1,8 @@
 import { uniqueId } from "lodash-es";
 import { makeAutoObservable } from "mobx";
-import { authServiceClient, inboxServiceClient, shortcutServiceClient, userServiceClient } from "@/grpcweb";
+import { authServiceClient, inboxServiceClient, userServiceClient } from "@/grpcweb";
 import { Inbox } from "@/types/proto/api/v1/inbox_service";
-import { Shortcut } from "@/types/proto/api/v1/shortcut_service";
-import { User, UserSetting, UserStats } from "@/types/proto/api/v1/user_service";
-import { findNearestMatchedLanguage } from "@/utils/i18n";
+import { Shortcut, User, UserSetting, UserStats } from "@/types/proto/api/v1/user_service";
 import workspaceStore from "./workspace";
 
 class LocalState {
@@ -71,15 +69,9 @@ const userStore = (() => {
         return userMap[name];
       }
     }
-    // Use search instead of the deprecated getUserByUsername
-    const { users } = await userServiceClient.searchUsers({
-      query: username,
-      pageSize: 10,
+    const user = await userServiceClient.getUserByUsername({
+      username,
     });
-    const user = users.find((u) => u.username === username);
-    if (!user) {
-      throw new Error(`User with username ${username} not found`);
-    }
     state.setPartial({
       userMapByName: {
         ...userMap,
@@ -128,16 +120,8 @@ const userStore = (() => {
   };
 
   const updateUserSetting = async (userSetting: Partial<UserSetting>, updateMask: string[]) => {
-    if (!state.currentUser) {
-      throw new Error("No current user");
-    }
-    // Ensure the setting has the proper resource name
-    const settingWithName = {
-      ...userSetting,
-      name: state.currentUser,
-    };
     const updatedUserSetting = await userServiceClient.updateUserSetting({
-      setting: settingWithName,
+      setting: userSetting,
       updateMask: updateMask,
     });
     state.setPartial({
@@ -153,21 +137,14 @@ const userStore = (() => {
       return;
     }
 
-    const { shortcuts } = await shortcutServiceClient.listShortcuts({ parent: state.currentUser });
+    const { shortcuts } = await userServiceClient.listShortcuts({ parent: state.currentUser });
     state.setPartial({
       shortcuts,
     });
   };
 
   const fetchInboxes = async () => {
-    if (!state.currentUser) {
-      throw new Error("No current user available");
-    }
-
-    const { inboxes } = await inboxServiceClient.listInboxes({
-      parent: state.currentUser,
-    });
-
+    const { inboxes } = await inboxServiceClient.listInboxes({});
     state.setPartial({
       inboxes,
     });
@@ -231,8 +208,8 @@ const userStore = (() => {
 
 export const initialUserStore = async () => {
   try {
-    const currentUser = await authServiceClient.getCurrentSession({});
-    const userSetting = await userServiceClient.getUserSetting({ name: currentUser.name });
+    const currentUser = await authServiceClient.getAuthStatus({});
+    const userSetting = await userServiceClient.getUserSetting({});
     userStore.state.setPartial({
       currentUser: currentUser.name,
       userSetting: UserSetting.fromPartial({
@@ -247,11 +224,7 @@ export const initialUserStore = async () => {
       appearance: userSetting.appearance,
     });
   } catch {
-    // find the nearest matched lang based on the `navigator.language` if the user is unauthenticated or settings retrieval fails.
-    const locale = findNearestMatchedLanguage(navigator.language);
-    workspaceStore.state.setPartial({
-      locale: locale,
-    });
+    // Do nothing.
   }
 };
 

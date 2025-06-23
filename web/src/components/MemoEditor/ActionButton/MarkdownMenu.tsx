@@ -1,8 +1,7 @@
-import { Link } from "@mui/joy";
+import { Dropdown, Menu, MenuButton, MenuItem, Link } from "@mui/joy";
 import { Button } from "@usememos/mui";
 import { CheckSquareIcon, Code2Icon, SquareSlashIcon } from "lucide-react";
 import { useTranslate } from "@/utils/i18n";
-import { Popover, PopoverContent, PopoverTrigger } from "../../ui/Popover";
 import { EditorRefActions } from "../Editor";
 
 interface Props {
@@ -62,36 +61,28 @@ const MarkdownMenu = (props: Props) => {
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="plain" className="p-0">
-          <SquareSlashIcon className="w-5 h-5" />
+    <Dropdown>
+      <MenuButton slots={{ root: "div" }}>
+        <Button size="sm" variant="plain">
+          <SquareSlashIcon className="w-5 h-5 mx-auto" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="text-sm p-1">
-        <div className="flex flex-col text-sm gap-0.5">
-          <button
-            onClick={handleCodeBlockClick}
-            className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-          >
-            <Code2Icon className="w-4 h-auto" />
-            <span>{t("markdown.code-block")}</span>
-          </button>
-          <button
-            onClick={handleCheckboxClick}
-            className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-          >
-            <CheckSquareIcon className="w-4 h-auto" />
-            <span>{t("markdown.checkbox")}</span>
-          </button>
-          <div className="pl-2">
-            <Link fontSize={12} href="https://www.usememos.com/docs/getting-started/content-syntax" target="_blank">
-              {t("markdown.content-syntax")}
-            </Link>
-          </div>
+      </MenuButton>
+      <Menu className="text-sm" size="sm" placement="bottom-start">
+        <MenuItem onClick={handleCodeBlockClick}>
+          <Code2Icon className="w-4 h-auto" />
+          <span>{t("markdown.code-block")}</span>
+        </MenuItem>
+        <MenuItem onClick={handleCheckboxClick}>
+          <CheckSquareIcon className="w-4 h-auto" />
+          <span>{t("markdown.checkbox")}</span>
+        </MenuItem>
+        <div className="-mt-0.5 pl-2">
+          <Link fontSize={12} href="https://www.usememos.com/docs/getting-started/content-syntax" target="_blank">
+            {t("markdown.content-syntax")}
+          </Link>
         </div>
-      </PopoverContent>
-    </Popover>
+      </Menu>
+    </Dropdown>
   );
 };
 

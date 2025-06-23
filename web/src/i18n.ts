@@ -21,7 +21,6 @@ export const locales = orderBy([
   "ka-GE",
   "ko",
   "mr",
-  "nb",
   "nl",
   "pl",
   "pt-PT",

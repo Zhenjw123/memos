@@ -4,21 +4,15 @@ import { useMemo } from "react";
 import MemoView from "@/components/MemoView";
 import PagedMemoList from "@/components/PagedMemoList";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMemoFilterStore } from "@/store/v1";
 import { viewStore, userStore } from "@/store/v2";
-import memoFilterStore from "@/store/v2/memoFilter";
-import { State } from "@/types/proto/api/v1/common";
+import { Direction, State } from "@/types/proto/api/v1/common";
 import { Memo } from "@/types/proto/api/v1/memo_service";
-
-// Helper function to extract shortcut ID from resource name
-// Format: users/{user}/shortcuts/{shortcut}
-const getShortcutId = (name: string): string => {
-  const parts = name.split("/");
-  return parts.length === 4 ? parts[3] : "";
-};
 
 const Home = observer(() => {
   const user = useCurrentUser();
-  const selectedShortcut = userStore.state.shortcuts.find((shortcut) => getShortcutId(shortcut.name) === memoFilterStore.shortcut);
+  const memoFilterStore = useMemoFilterStore();
+  const selectedShortcut = userStore.state.shortcuts.find((shortcut) => shortcut.id === memoFilterStore.shortcut);
 
   const memoListFilter = useMemo(() => {
     const conditions = [];
@@ -68,7 +62,7 @@ const Home = observer(() => {
           .sort((a, b) => Number(b.pinned) - Number(a.pinned))
       }
       owner={user.name}
-      orderBy={viewStore.state.orderByTimeAsc ? "display_time asc" : "display_time desc"}
+      direction={viewStore.state.orderByTimeAsc ? Direction.ASC : Direction.DESC}
       filter={selectedShortcut?.filter || ""}
       oldFilter={memoListFilter}
     />

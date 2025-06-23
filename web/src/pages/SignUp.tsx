@@ -1,6 +1,5 @@
 import { Button, Input } from "@usememos/mui";
 import { LoaderIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
 import { ClientError } from "nice-grpc-web";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -13,7 +12,7 @@ import { workspaceStore } from "@/store/v2";
 import { initialUserStore } from "@/store/v2/user";
 import { useTranslate } from "@/utils/i18n";
 
-const SignUp = observer(() => {
+const SignUp = () => {
   const t = useTranslate();
   const navigateTo = useNavigateTo();
   const actionBtnLoadingState = useLoading(false);
@@ -58,12 +57,12 @@ const SignUp = observer(() => {
   };
 
   return (
-    <div className="py-4 sm:py-8 w-80 max-w-full min-h-svh mx-auto flex flex-col justify-start items-center">
+    <div className="py-4 sm:py-8 w-80 max-w-full min-h-[100svh] mx-auto flex flex-col justify-start items-center">
       <div className="w-full py-4 grow flex flex-col justify-center items-center">
         <div className="w-full flex flex-row justify-center items-center mb-6">
           <img className="h-14 w-auto rounded-full shadow" src={workspaceGeneralSetting.customProfile?.logoUrl || "/logo.webp"} alt="" />
           <p className="ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
-            {workspaceGeneralSetting.customProfile?.title || "Deep Note"}
+            {workspaceGeneralSetting.customProfile?.title || "Join Deep Note"}
           </p>
         </div>
         {!workspaceGeneralSetting.disallowUserRegistration ? (
@@ -116,20 +115,12 @@ const SignUp = observer(() => {
                   {t("common.sign-up")}
                   {actionBtnLoadingState.isLoading && <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />}
                 </Button>
-              </div> 
-              <div className="w-full mt-4 text-sm text-center">
-                    已有账号？
-                <Link to="/auth" className="cursor-pointer ml-2 text-blue-600 hover:underline" viewTransition>
-                  立即登录
-                </Link>
-             </div>
+              </div>
             </form>
-           
           </>
         ) : (
           <p className="w-full text-2xl mt-2 dark:text-gray-500">Sign up is not allowed.</p>
-        )
-        }
+        )}
         {!workspaceStore.state.profile.owner ? (
           <p className="w-full mt-4 text-sm font-medium dark:text-gray-500">{t("auth.host-tip")}</p>
         ) : (
@@ -144,6 +135,6 @@ const SignUp = observer(() => {
       <AuthFooter />
     </div>
   );
-});
+};
 
 export default SignUp;

@@ -1,21 +1,20 @@
-import { Select, Option, Divider } from "@mui/joy";
-import { Button, Textarea, Switch } from "@usememos/mui";
+import { Select, Textarea, Option, Divider, Switch } from "@mui/joy";
+import { Button } from "@usememos/mui";
 import { isEqual } from "lodash-es";
 import { ExternalLinkIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { identityProviderServiceClient } from "@/grpcweb";
-import { workspaceSettingNamePrefix } from "@/store/common";
+import { workspaceSettingNamePrefix } from "@/store/v1";
 import { workspaceStore } from "@/store/v2";
-import { WorkspaceSettingKey } from "@/store/v2/workspace";
 import { IdentityProvider } from "@/types/proto/api/v1/idp_service";
-import { WorkspaceGeneralSetting } from "@/types/proto/api/v1/workspace_service";
+import { WorkspaceGeneralSetting } from "@/types/proto/api/v1/workspace_setting_service";
+import { WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { useTranslate } from "@/utils/i18n";
 import showUpdateCustomizedProfileDialog from "../UpdateCustomizedProfileDialog";
 
-const WorkspaceSection = observer(() => {
+const WorkspaceSection = () => {
   const t = useTranslate();
   const originalSetting = WorkspaceGeneralSetting.fromPartial(
     workspaceStore.getWorkspaceSettingByKey(WorkspaceSettingKey.GENERAL)?.generalSetting || {},
@@ -24,7 +23,7 @@ const WorkspaceSection = observer(() => {
   const [identityProviderList, setIdentityProviderList] = useState<IdentityProvider[]>([]);
 
   useEffect(() => {
-    setWorkspaceGeneralSetting({ ...workspaceGeneralSetting, customProfile: originalSetting.customProfile });
+    setWorkspaceGeneralSetting(originalSetting);
   }, [workspaceStore.getWorkspaceSettingByKey(WorkspaceSettingKey.GENERAL)]);
 
   const handleUpdateCustomizedProfileButtonClick = () => {
@@ -69,7 +68,7 @@ const WorkspaceSection = observer(() => {
       <div className="w-full flex flex-row justify-between items-center">
         <div>
           {t("setting.system-section.server-name")}:{" "}
-          <span className="font-mono font-bold">{workspaceGeneralSetting.customProfile?.title || "Deep Note"}</span>
+          <span className="font-mono font-bold">{workspaceGeneralSetting.customProfile?.title || "Memos"}</span>
         </div>
         <Button variant="outlined" onClick={handleUpdateCustomizedProfileButtonClick}>
           {t("common.edit")}
@@ -81,9 +80,13 @@ const WorkspaceSection = observer(() => {
         <span>{t("setting.system-section.additional-style")}</span>
       </div>
       <Textarea
-        className="font-mono"
-        rows={3}
-        fullWidth
+        className="w-full"
+        sx={{
+          fontFamily: "monospace",
+          fontSize: "14px",
+        }}
+        minRows={2}
+        maxRows={4}
         placeholder={t("setting.system-section.additional-style-placeholder")}
         value={workspaceGeneralSetting.additionalStyle}
         onChange={(event) => updatePartialSetting({ additionalStyle: event.target.value })}
@@ -92,9 +95,14 @@ const WorkspaceSection = observer(() => {
         <span>{t("setting.system-section.additional-script")}</span>
       </div>
       <Textarea
-        className="font-mono"
-        rows={3}
-        fullWidth
+        className="w-full"
+        color="neutral"
+        sx={{
+          fontFamily: "monospace",
+          fontSize: "14px",
+        }}
+        minRows={2}
+        maxRows={4}
         placeholder={t("setting.system-section.additional-script-placeholder")}
         value={workspaceGeneralSetting.additionalScript}
         onChange={(event) => updatePartialSetting({ additionalScript: event.target.value })}
@@ -120,10 +128,7 @@ const WorkspaceSection = observer(() => {
       <div className="w-full flex flex-row justify-between items-center">
         <span>{t("setting.workspace-section.disallow-password-auth")}</span>
         <Switch
-          disabled={
-            workspaceStore.state.profile.mode === "demo" ||
-            (identityProviderList.length === 0 && !workspaceGeneralSetting.disallowPasswordAuth)
-          }
+          disabled={workspaceStore.state.profile.mode === "demo" || identityProviderList.length === 0}
           checked={workspaceGeneralSetting.disallowPasswordAuth}
           onChange={(event) => updatePartialSetting({ disallowPasswordAuth: event.target.checked })}
         />
@@ -145,7 +150,7 @@ const WorkspaceSection = observer(() => {
       <div className="w-full flex flex-row justify-between items-center">
         <span className="truncate">{t("setting.workspace-section.week-start-day")}</span>
         <Select
-          className="min-w-fit!"
+          className="!min-w-fit"
           value={workspaceGeneralSetting.weekStartDayOffset}
           onChange={(_, weekStartDayOffset) => {
             updatePartialSetting({ weekStartDayOffset: weekStartDayOffset || 0 });
@@ -163,6 +168,6 @@ const WorkspaceSection = observer(() => {
       </div>
     </div>
   );
-});
+};
 
 export default WorkspaceSection;

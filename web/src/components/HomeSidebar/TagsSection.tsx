@@ -1,11 +1,11 @@
-import { Switch } from "@usememos/mui";
+import { Dropdown, Menu, MenuButton, MenuItem, Switch } from "@mui/joy";
 import { Edit3Icon, HashIcon, MoreVerticalIcon, TagsIcon, TrashIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import toast from "react-hot-toast";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import { memoServiceClient } from "@/grpcweb";
+import { useMemoFilterStore } from "@/store/v1";
 import { userStore } from "@/store/v2";
-import memoFilterStore, { MemoFilter } from "@/store/v2/memoFilter";
 import { cn } from "@/utils";
 import { useTranslate } from "@/utils/i18n";
 import showRenameTagDialog from "../RenameTagDialog";
@@ -18,15 +18,16 @@ interface Props {
 
 const TagsSection = observer((props: Props) => {
   const t = useTranslate();
+  const memoFilterStore = useMemoFilterStore();
   const [treeMode, setTreeMode] = useLocalStorage<boolean>("tag-view-as-tree", false);
   const tags = Object.entries(userStore.state.tagCount)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .sort((a, b) => b[1] - a[1]);
 
   const handleTagClick = (tag: string) => {
-    const isActive = memoFilterStore.getFiltersByFactor("tagSearch").some((filter: MemoFilter) => filter.value === tag);
+    const isActive = memoFilterStore.getFiltersByFactor("tagSearch").some((filter) => filter.value === tag);
     if (isActive) {
-      memoFilterStore.removeFilter((f: MemoFilter) => f.factor === "tagSearch" && f.value === tag);
+      memoFilterStore.removeFilter((f) => f.factor === "tagSearch" && f.value === tag);
     } else {
       memoFilterStore.addFilter({
         factor: "tagSearch",
@@ -56,8 +57,8 @@ const TagsSection = observer((props: Props) => {
               <MoreVerticalIcon className="w-4 h-auto shrink-0 opacity-60" />
             </PopoverTrigger>
             <PopoverContent align="end" alignOffset={-12}>
-              <div className="w-auto flex flex-row justify-between items-center gap-2 p-1">
-                <span className="text-sm shrink-0 dark:text-zinc-400">{t("common.tree-mode")}</span>
+              <div className="w-auto flex flex-row justify-between items-center gap-2">
+                <span className="text-sm shrink-0">{t("common.tree-mode")}</span>
                 <Switch size="sm" checked={treeMode} onChange={(event) => setTreeMode(event.target.checked)} />
               </div>
             </PopoverContent>
@@ -74,32 +75,24 @@ const TagsSection = observer((props: Props) => {
                 key={tag}
                 className="shrink-0 w-auto max-w-full text-sm rounded-md leading-6 flex flex-row justify-start items-center select-none hover:opacity-80 text-gray-600 dark:text-gray-400 dark:border-zinc-800"
               >
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div className="shrink-0 group cursor-pointer">
+                <Dropdown>
+                  <MenuButton slots={{ root: "div" }}>
+                    <div className="shrink-0 group">
                       <HashIcon className="group-hover:hidden w-4 h-auto shrink-0 opacity-40" />
                       <MoreVerticalIcon className="hidden group-hover:block w-4 h-auto shrink-0 opacity-60" />
                     </div>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" sideOffset={2}>
-                    <div className="flex flex-col text-sm gap-0.5">
-                      <button
-                        onClick={() => showRenameTagDialog({ tag: tag })}
-                        className="flex items-center gap-2 px-2 py-1 text-left dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                      >
-                        <Edit3Icon className="w-4 h-auto" />
-                        {t("common.rename")}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTag(tag)}
-                        className="flex items-center gap-2 px-2 py-1 text-left text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-zinc-700 outline-none rounded"
-                      >
-                        <TrashIcon className="w-4 h-auto" />
-                        {t("common.delete")}
-                      </button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  </MenuButton>
+                  <Menu size="sm" placement="bottom-start">
+                    <MenuItem onClick={() => showRenameTagDialog({ tag: tag })}>
+                      <Edit3Icon className="w-4 h-auto" />
+                      {t("common.rename")}
+                    </MenuItem>
+                    <MenuItem color="danger" onClick={() => handleDeleteTag(tag)}>
+                      <TrashIcon className="w-4 h-auto" />
+                      {t("common.delete")}
+                    </MenuItem>
+                  </Menu>
+                </Dropdown>
                 <div
                   className={cn("inline-flex flex-nowrap ml-0.5 gap-0.5 cursor-pointer max-w-[calc(100%-16px)]")}
                   onClick={() => handleTagClick(tag)}
@@ -113,7 +106,7 @@ const TagsSection = observer((props: Props) => {
         )
       ) : (
         !props.readonly && (
-          <div className="p-2 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-md flex flex-row justify-start items-start gap-1 text-gray-400 dark:text-gray-500">
+          <div className="p-2 border border-dashed dark:border-zinc-800 rounded-md flex flex-row justify-start items-start gap-1 text-gray-400 dark:text-gray-500">
             <TagsIcon />
             <p className="mt-0.5 text-sm leading-snug italic">{t("tag.create-tags-guide")}</p>
           </div>

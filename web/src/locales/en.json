@@ -20,7 +20,6 @@
     "admin": "Admin",
     "archive": "Archive",
     "archived": "Archived",
-    "attachments": "Attachments",
     "avatar": "Avatar",
     "basic": "Basic",
     "beta": "Beta",
@@ -50,7 +49,6 @@
     "input": "Input",
     "language": "Language",
     "last-updated-at": "Last updated at",
-    "layout": "Layout",
     "learn-more": "Learn more",
     "link": "Link",
     "mark": "Mark",
@@ -95,7 +93,6 @@
     "unpin": "Unpin",
     "update": "Update",
     "upload": "Upload",
-    "user": "User",
     "username": "Username",
     "version": "Version",
     "visibility": "Visibility",
@@ -113,8 +110,7 @@
   "editor": {
     "add-your-comment-here": "Add your comment here...",
     "any-thoughts": "Any thoughts...",
-    "save": "Save",
-    "no-changes-detected": "No changes detected"
+    "save": "Save"
   },
   "filters": {
     "has-code": "hasCode",
@@ -133,7 +129,7 @@
   "memo": {
     "archived-at": "Archived at",
     "click-to-hide-nsfw-content": "Click to hide NSFW content",
-    "click-to-show-nsfw-content": "Click to show NSFW content",
+    "click-to-show-nsfw-content": "Click to show NSFW contnet",
     "code": "Code",
     "comment": {
       "self": "Comments",
@@ -164,9 +160,7 @@
       "private": "Private",
       "protected": "Workspace",
       "public": "Public"
-    },
-    "list": "List",
-    "masonry": "Masonry"
+    }
   },
   "message": {
     "archived-successfully": "Archived successfully",
@@ -225,8 +219,7 @@
     "no-unused-resources": "No unused resources",
     "reset-link": "Reset Link",
     "reset-link-prompt": "Are you sure to reset the link? This will break all current link usages. THIS ACTION IS IRREVERSIBLE",
-    "reset-resource-link": "Reset Resource Link",
-    "unused-resources": "Unused resources"
+    "reset-resource-link": "Reset Resource Link"
   },
   "router": {
     "back-to-top": "Back to Top",
@@ -283,7 +276,7 @@
     "memo-related": "Memo",
     "memo-related-settings": {
       "content-lenght-limit": "Content length limit (Byte)",
-      "enable-blur-nsfw-content": "Enable sensitive content (NSFW) blurring",
+      "enable-blur-nsfw-content": "Enable NSFW content blurring (add NSFW tags below)",
       "enable-link-preview": "Enable link preview",
       "enable-memo-comments": "Enable memo comments",
       "enable-memo-location": "Enable memo location",
@@ -374,7 +367,7 @@
       "disable-markdown-shortcuts-in-editor": "Disable Markdown shortcuts in editor",
       "disable-password-login": "Disable password login",
       "disable-password-login-final-warning": "Please type \"CONFIRM\" if you know what you are doing.",
-      "disable-password-login-warning": "This will disable password login for all users. It is not possible to log in without reverting this setting in the database if your configured identity providers fail. You’ll also have to be extra careful when removing an identity provider",
+      "disable-password-login-warning": "This will disable password login for all users. It is not possible to log in without reverting this setting in the database if your configured identity providers fail. You’ll also have to be extra carefull when removing an identity provider",
       "disable-public-memos": "Disable public memos",
       "display-with-updated-time": "Display with updated time",
       "enable-auto-compact": "Enable auto compact",
@@ -423,7 +416,7 @@
     "old-name": "Old Name",
     "rename-error-empty": "Tag name cannot be empty or contain spaces",
     "rename-error-repeat": "New name cannot be the same as the old name",
-    "rename-success": "Renamed tag successfully",
+    "rename-success": "Rename tag successfully",
     "rename-tag": "Rename tag",
     "rename-tip": "All your memos with this tag will be updated."
   }

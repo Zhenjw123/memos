@@ -10,8 +10,8 @@ import { useTranslate } from "@/utils/i18n";
 import showCreateAccessTokenDialog from "../CreateAccessTokenDialog";
 import LearnMore from "../LearnMore";
 
-const listAccessTokens = async (parent: string) => {
-  const { accessTokens } = await userServiceClient.listUserAccessTokens({ parent });
+const listAccessTokens = async (name: string) => {
+  const { accessTokens } = await userServiceClient.listUserAccessTokens({ name });
   return accessTokens.sort((a, b) => (b.issuedAt?.getTime() ?? 0) - (a.issuedAt?.getTime() ?? 0));
 };
 
@@ -36,12 +36,12 @@ const AccessTokenSection = () => {
     toast.success(t("setting.access-token-section.access-token-copied-to-clipboard"));
   };
 
-  const handleDeleteAccessToken = async (userAccessToken: UserAccessToken) => {
-    const formatedAccessToken = getFormatedAccessToken(userAccessToken.accessToken);
+  const handleDeleteAccessToken = async (accessToken: string) => {
+    const formatedAccessToken = getFormatedAccessToken(accessToken);
     const confirmed = window.confirm(t("setting.access-token-section.access-token-deletion", { accessToken: formatedAccessToken }));
     if (confirmed) {
-      await userServiceClient.deleteUserAccessToken({ name: userAccessToken.name });
-      setUserAccessTokens(userAccessTokens.filter((token) => token.accessToken !== userAccessToken.accessToken));
+      await userServiceClient.deleteUserAccessToken({ name: currentUser.name, accessToken: accessToken });
+      setUserAccessTokens(userAccessTokens.filter((token) => token.accessToken !== accessToken));
     }
   };
 
@@ -73,7 +73,7 @@ const AccessTokenSection = () => {
         </div>
         <div className="w-full mt-2 flow-root">
           <div className="overflow-x-auto">
-            <div className="inline-block min-w-full border border-zinc-200 rounded-lg align-middle dark:border-zinc-600">
+            <div className="inline-block min-w-full border rounded-lg align-middle dark:border-zinc-600">
               <table className="min-w-full divide-y divide-gray-300 dark:divide-zinc-600">
                 <thead>
                   <tr>
@@ -99,7 +99,7 @@ const AccessTokenSection = () => {
                     <tr key={userAccessToken.accessToken}>
                       <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 dark:text-gray-400 flex flex-row justify-start items-center gap-x-1">
                         <span className="font-mono">{getFormatedAccessToken(userAccessToken.accessToken)}</span>
-                        <Button variant="plain" onClick={() => copyAccessToken(userAccessToken.accessToken)}>
+                        <Button variant="plain" size="sm" onClick={() => copyAccessToken(userAccessToken.accessToken)}>
                           <ClipboardIcon className="w-4 h-auto text-gray-400" />
                         </Button>
                       </td>
@@ -115,8 +115,9 @@ const AccessTokenSection = () => {
                       <td className="relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm">
                         <Button
                           variant="plain"
+                          size="sm"
                           onClick={() => {
-                            handleDeleteAccessToken(userAccessToken);
+                            handleDeleteAccessToken(userAccessToken.accessToken);
                           }}
                         >
                           <TrashIcon className="text-red-600 w-4 h-auto" />

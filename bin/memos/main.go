@@ -12,15 +12,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/internal/version"
 	"github.com/usememos/memos/server"
+	"github.com/usememos/memos/server/profile"
+	"github.com/usememos/memos/server/version"
 	"github.com/usememos/memos/store"
 	"github.com/usememos/memos/store/db"
 )
 
 const (
-	greetingBanner = `        
+	greetingBanner = `
 	                                                                                     
 ██████╗ ███████╗███████╗██████╗     ███╗   ██╗ ██████╗ ████████╗███████╗
 ██╔══██╗██╔════╝██╔════╝██╔══██╗    ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝
@@ -28,20 +28,19 @@ const (
 ██║  ██║██╔══╝  ██╔══╝  ██╔═══╝     ██║╚██╗██║██║   ██║   ██║   ██╔══╝  
 ██████╔╝███████╗███████╗██║         ██║ ╚████║╚██████╔╝   ██║   ███████╗
 ╚═════╝ ╚══════╝╚══════╝╚═╝         ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝
-                                                                                                 
+    
 `
 )
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "Deep Node",
+		Use:   "Deep Note",
 		Short: `An open source, lightweight note-taking service. Easily capture and share your great thoughts.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			instanceProfile := &profile.Profile{
 				Mode:        viper.GetString("mode"),
 				Addr:        viper.GetString("addr"),
 				Port:        viper.GetInt("port"),
-				UNIXSock:    viper.GetString("unix-sock"),
 				Data:        viper.GetString("data"),
 				Driver:      viper.GetString("driver"),
 				DSN:         viper.GetString("dsn"),
@@ -109,7 +108,6 @@ func init() {
 	rootCmd.PersistentFlags().String("mode", "dev", `mode of server, can be "prod" or "dev" or "demo"`)
 	rootCmd.PersistentFlags().String("addr", "", "address of server")
 	rootCmd.PersistentFlags().Int("port", 8081, "port of server")
-	rootCmd.PersistentFlags().String("unix-sock", "", "path to the unix socket, overrides --addr and --port")
 	rootCmd.PersistentFlags().String("data", "", "data directory")
 	rootCmd.PersistentFlags().String("driver", "sqlite", "database driver")
 	rootCmd.PersistentFlags().String("dsn", "", "database source name(aka. DSN)")
@@ -122,9 +120,6 @@ func init() {
 		panic(err)
 	}
 	if err := viper.BindPFlag("port", rootCmd.PersistentFlags().Lookup("port")); err != nil {
-		panic(err)
-	}
-	if err := viper.BindPFlag("unix-sock", rootCmd.PersistentFlags().Lookup("unix-sock")); err != nil {
 		panic(err)
 	}
 	if err := viper.BindPFlag("data", rootCmd.PersistentFlags().Lookup("data")); err != nil {
@@ -158,28 +153,23 @@ version: %s
 data: %s
 addr: %s
 port: %d
-unix-sock: %s
 mode: %s
 driver: %s
 ---
-`, profile.Version, profile.Data, profile.Addr, profile.Port, profile.UNIXSock, profile.Mode, profile.Driver)
+`, profile.Version, profile.Data, profile.Addr, profile.Port, profile.Mode, profile.Driver)
 
 	print(greetingBanner)
-	if len(profile.UNIXSock) == 0 {
-		if len(profile.Addr) == 0 {
-			fmt.Printf("Version %s has been started on port %d\n", profile.Version, profile.Port)
-		} else {
-			fmt.Printf("Version %s has been started on address '%s' and port %d\n", profile.Version, profile.Addr, profile.Port)
-		}
+	if len(profile.Addr) == 0 {
+		fmt.Printf("Version %s has been started on port %d\n", profile.Version, profile.Port)
 	} else {
-		fmt.Printf("Version %s has been started on unix socket %s\n", profile.Version, profile.UNIXSock)
+		fmt.Printf("Version %s has been started on address '%s' and port %d\n", profile.Version, profile.Addr, profile.Port)
 	}
-	// 	fmt.Printf(`---
-	// See more in:
-	// 👉Website: %s
-	// 👉GitHub: %s
-	// ---
-	// `, "https://usememos.com", "https://github.com/usememos/memos")
+	fmt.Printf(`---
+See more in:
+👉Website: %s
+👉GitHub: %s
+---
+`, "https://usememos.com", "https://github.com/usememos/memos")
 }
 
 func main() {

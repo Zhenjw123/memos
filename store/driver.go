@@ -15,8 +15,6 @@ type Driver interface {
 	GetDB() *sql.DB
 	Close() error
 
-	IsInitialized(ctx context.Context) (bool, error)
-
 	// MigrationHistory model related methods.
 	FindMigrationHistoryList(ctx context.Context, find *FindMigrationHistory) ([]*MigrationHistory, error)
 	UpsertMigrationHistory(ctx context.Context, upsert *UpsertMigrationHistory) (*MigrationHistory, error)
@@ -25,11 +23,11 @@ type Driver interface {
 	CreateActivity(ctx context.Context, create *Activity) (*Activity, error)
 	ListActivities(ctx context.Context, find *FindActivity) ([]*Activity, error)
 
-	// Attachment model related methods.
-	CreateAttachment(ctx context.Context, create *Attachment) (*Attachment, error)
-	ListAttachments(ctx context.Context, find *FindAttachment) ([]*Attachment, error)
-	UpdateAttachment(ctx context.Context, update *UpdateAttachment) error
-	DeleteAttachment(ctx context.Context, delete *DeleteAttachment) error
+	// Resource model related methods.
+	CreateResource(ctx context.Context, create *Resource) (*Resource, error)
+	ListResources(ctx context.Context, find *FindResource) ([]*Resource, error)
+	UpdateResource(ctx context.Context, update *UpdateResource) error
+	DeleteResource(ctx context.Context, delete *DeleteResource) error
 
 	// Memo model related methods.
 	CreateMemo(ctx context.Context, create *Memo) (*Memo, error)

@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -21,7 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/usememos/memos/internal/base"
+	"github.com/usememos/memos/internal/util"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
@@ -41,11 +40,8 @@ func (s *APIV1Service) ListUsers(ctx context.Context, _ *v1pb.ListUsersRequest) 
 		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
 	}
 
-	// TODO: Implement proper filtering, ordering, and pagination
-	// For now, return all users with basic structure
 	response := &v1pb.ListUsersResponse{
-		Users:     []*v1pb.User{},
-		TotalSize: int32(len(users)),
+		Users: []*v1pb.User{},
 	}
 	for _, user := range users {
 		response.Users = append(response.Users, convertUserFromStore(user))
@@ -67,50 +63,25 @@ func (s *APIV1Service) GetUser(ctx context.Context, request *v1pb.GetUserRequest
 	if user == nil {
 		return nil, status.Errorf(codes.NotFound, "user not found")
 	}
-	userPb := convertUserFromStore(user)
 
-	// TODO: Implement read_mask field filtering
-	// For now, return all fields
-
-	return userPb, nil
+	return convertUserFromStore(user), nil
 }
 
-func (s *APIV1Service) SearchUsers(ctx context.Context, request *v1pb.SearchUsersRequest) (*v1pb.SearchUsersResponse, error) {
-	currentUser, err := s.GetCurrentUser(ctx)
+func (s *APIV1Service) GetUserByUsername(ctx context.Context, request *v1pb.GetUserByUsernameRequest) (*v1pb.User, error) {
+	user, err := s.Store.GetUser(ctx, &store.FindUser{
+		Username: &request.Username,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
-	if currentUser.Role != store.RoleHost && currentUser.Role != store.RoleAdmin {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "user not found")
 	}
 
-	// Search users by username, email, or display name
-	users, err := s.Store.ListUsers(ctx, &store.FindUser{})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
-	}
-
-	var filteredUsers []*store.User
-	query := strings.ToLower(request.Query)
-	for _, user := range users {
-		if strings.Contains(strings.ToLower(user.Username), query) ||
-			strings.Contains(strings.ToLower(user.Email), query) ||
-			strings.Contains(strings.ToLower(user.Nickname), query) {
-			filteredUsers = append(filteredUsers, user)
-		}
-	}
-
-	response := &v1pb.SearchUsersResponse{
-		Users:     []*v1pb.User{},
-		TotalSize: int32(len(filteredUsers)),
-	}
-	for _, user := range filteredUsers {
-		response.Users = append(response.Users, convertUserFromStore(user))
-	}
-	return response, nil
+	return convertUserFromStore(user), nil
 }
 
-func (s *APIV1Service) GetUserAvatar(ctx context.Context, request *v1pb.GetUserAvatarRequest) (*httpbody.HttpBody, error) {
+func (s *APIV1Service) GetUserAvatarBinary(ctx context.Context, request *v1pb.GetUserAvatarBinaryRequest) (*httpbody.HttpBody, error) {
 	userID, err := ExtractUserIDFromName(request.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
@@ -151,24 +122,9 @@ func (s *APIV1Service) CreateUser(ctx context.Context, request *v1pb.CreateUserR
 	if currentUser.Role != store.RoleHost {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
-	// TODO: Handle request_id for idempotency
-	// TODO: Handle user_id field if provided
-
-	if !base.UIDMatcher.MatchString(strings.ToLower(request.User.Username)) {
+	if !util.UIDMatcher.MatchString(strings.ToLower(request.User.Username)) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid username: %s", request.User.Username)
 	}
-
-	// If validate_only is true, just validate without creating
-	if request.ValidateOnly {
-		// Perform validation checks without actually creating the user
-		return &v1pb.User{
-			Username:    request.User.Username,
-			Email:       request.User.Email,
-			DisplayName: request.User.DisplayName,
-			Role:        request.User.Role,
-		}, nil
-	}
-
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.User.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to generate password hash").SetInternal(err)
@@ -178,7 +134,7 @@ func (s *APIV1Service) CreateUser(ctx context.Context, request *v1pb.CreateUserR
 		Username:     request.User.Username,
 		Role:         convertUserRoleToStore(request.User.Role),
 		Email:        request.User.Email,
-		Nickname:     request.User.DisplayName,
+		Nickname:     request.User.Nickname,
 		PasswordHash: string(passwordHash),
 	})
 	if err != nil {
@@ -189,9 +145,11 @@ func (s *APIV1Service) CreateUser(ctx context.Context, request *v1pb.CreateUserR
 }
 
 func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserRequest) (*v1pb.User, error) {
-	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "update mask is empty")
+	workspaceGeneralSetting, err := s.Store.GetWorkspaceGeneralSetting(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get workspace general setting: %v", err)
 	}
+
 	userID, err := ExtractUserIDFromName(request.User.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
@@ -200,10 +158,11 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
-	// Check permission.
-	// Only allow admin or self to update user.
 	if currentUser.ID != userID && currentUser.Role != store.RoleAdmin && currentUser.Role != store.RoleHost {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "update mask is empty")
 	}
 
 	user, err := s.Store.GetUser(ctx, &store.FindUser{ID: &userID})
@@ -211,11 +170,6 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
 	if user == nil {
-		// Handle allow_missing field
-		if request.AllowMissing {
-			// Could create user if missing, but for now return not found
-			return nil, status.Errorf(codes.NotFound, "user not found")
-		}
 		return nil, status.Errorf(codes.NotFound, "user not found")
 	}
 
@@ -224,24 +178,20 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 		ID:        user.ID,
 		UpdatedTs: &currentTs,
 	}
-	workspaceGeneralSetting, err := s.Store.GetWorkspaceGeneralSetting(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get workspace general setting: %v", err)
-	}
 	for _, field := range request.UpdateMask.Paths {
 		if field == "username" {
 			if workspaceGeneralSetting.DisallowChangeUsername {
 				return nil, status.Errorf(codes.PermissionDenied, "permission denied: disallow change username")
 			}
-			if !base.UIDMatcher.MatchString(strings.ToLower(request.User.Username)) {
+			if !util.UIDMatcher.MatchString(strings.ToLower(request.User.Username)) {
 				return nil, status.Errorf(codes.InvalidArgument, "invalid username: %s", request.User.Username)
 			}
 			update.Username = &request.User.Username
-		} else if field == "display_name" {
+		} else if field == "nickname" {
 			if workspaceGeneralSetting.DisallowChangeNickname {
 				return nil, status.Errorf(codes.PermissionDenied, "permission denied: disallow change nickname")
 			}
-			update.Nickname = &request.User.DisplayName
+			update.Nickname = &request.User.Nickname
 		} else if field == "email" {
 			update.Email = &request.User.Email
 		} else if field == "avatar_url" {
@@ -249,10 +199,6 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 		} else if field == "description" {
 			update.Description = &request.User.Description
 		} else if field == "role" {
-			// Only allow admin to update role.
-			if currentUser.Role != store.RoleAdmin && currentUser.Role != store.RoleHost {
-				return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-			}
 			role := convertUserRoleToStore(request.User.Role)
 			update.Role = &role
 		} else if field == "password" {
@@ -310,39 +256,25 @@ func (s *APIV1Service) DeleteUser(ctx context.Context, request *v1pb.DeleteUserR
 
 func getDefaultUserSetting() *v1pb.UserSetting {
 	return &v1pb.UserSetting{
-		Name:           "", // Will be set by caller
 		Locale:         "en",
 		Appearance:     "system",
 		MemoVisibility: "PRIVATE",
 	}
 }
 
-func (s *APIV1Service) GetUserSetting(ctx context.Context, request *v1pb.GetUserSettingRequest) (*v1pb.UserSetting, error) {
-	userID, err := ExtractUserIDFromName(request.Name)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
-	}
-
-	currentUser, err := s.GetCurrentUser(ctx)
+func (s *APIV1Service) GetUserSetting(ctx context.Context, _ *v1pb.GetUserSettingRequest) (*v1pb.UserSetting, error) {
+	user, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
 	}
 
-	// Only allow user to get their own settings
-	if currentUser.ID != userID {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-	}
-
 	userSettings, err := s.Store.ListUserSettings(ctx, &store.FindUserSetting{
-		UserID: &userID,
+		UserID: &user.ID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list user settings: %v", err)
 	}
-
 	userSettingMessage := getDefaultUserSetting()
-	userSettingMessage.Name = fmt.Sprintf("users/%d", userID)
-
 	for _, setting := range userSettings {
 		if setting.Key == storepb.UserSettingKey_LOCALE {
 			userSettingMessage.Locale = setting.GetLocale()
@@ -356,20 +288,9 @@ func (s *APIV1Service) GetUserSetting(ctx context.Context, request *v1pb.GetUser
 }
 
 func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.UpdateUserSettingRequest) (*v1pb.UserSetting, error) {
-	// Extract user ID from the setting resource name
-	userID, err := ExtractUserIDFromName(request.Setting.Name)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
-	}
-
-	currentUser, err := s.GetCurrentUser(ctx)
+	user, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
-	}
-
-	// Only allow user to update their own settings
-	if currentUser.ID != userID {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
 	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
@@ -379,7 +300,7 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 	for _, field := range request.UpdateMask.Paths {
 		if field == "locale" {
 			if _, err := s.Store.UpsertUserSetting(ctx, &storepb.UserSetting{
-				UserId: userID,
+				UserId: user.ID,
 				Key:    storepb.UserSettingKey_LOCALE,
 				Value: &storepb.UserSetting_Locale{
 					Locale: request.Setting.Locale,
@@ -389,7 +310,7 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 			}
 		} else if field == "appearance" {
 			if _, err := s.Store.UpsertUserSetting(ctx, &storepb.UserSetting{
-				UserId: userID,
+				UserId: user.ID,
 				Key:    storepb.UserSettingKey_APPEARANCE,
 				Value: &storepb.UserSetting_Appearance{
 					Appearance: request.Setting.Appearance,
@@ -399,7 +320,7 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 			}
 		} else if field == "memo_visibility" {
 			if _, err := s.Store.UpsertUserSetting(ctx, &storepb.UserSetting{
-				UserId: userID,
+				UserId: user.ID,
 				Key:    storepb.UserSettingKey_MEMO_VISIBILITY,
 				Value: &storepb.UserSetting_MemoVisibility{
 					MemoVisibility: request.Setting.MemoVisibility,
@@ -412,11 +333,11 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 		}
 	}
 
-	return s.GetUserSetting(ctx, &v1pb.GetUserSettingRequest{Name: request.Setting.Name})
+	return s.GetUserSetting(ctx, &v1pb.GetUserSettingRequest{})
 }
 
 func (s *APIV1Service) ListUserAccessTokens(ctx context.Context, request *v1pb.ListUserAccessTokensRequest) (*v1pb.ListUserAccessTokensResponse, error) {
-	userID, err := ExtractUserIDFromName(request.Parent)
+	userID, err := ExtractUserIDFromName(request.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
 	}
@@ -456,16 +377,15 @@ func (s *APIV1Service) ListUserAccessTokens(ctx context.Context, request *v1pb.L
 			continue
 		}
 
-		accessTokenResponse := &v1pb.UserAccessToken{
-			Name:        fmt.Sprintf("users/%d/accessTokens/%s", userID, userAccessToken.AccessToken),
+		userAccessToken := &v1pb.UserAccessToken{
 			AccessToken: userAccessToken.AccessToken,
 			Description: userAccessToken.Description,
 			IssuedAt:    timestamppb.New(claims.IssuedAt.Time),
 		}
 		if claims.ExpiresAt != nil {
-			accessTokenResponse.ExpiresAt = timestamppb.New(claims.ExpiresAt.Time)
+			userAccessToken.ExpiresAt = timestamppb.New(claims.ExpiresAt.Time)
 		}
-		accessTokens = append(accessTokens, accessTokenResponse)
+		accessTokens = append(accessTokens, userAccessToken)
 	}
 
 	// Sort by issued time in descending order.
@@ -479,7 +399,7 @@ func (s *APIV1Service) ListUserAccessTokens(ctx context.Context, request *v1pb.L
 }
 
 func (s *APIV1Service) CreateUserAccessToken(ctx context.Context, request *v1pb.CreateUserAccessTokenRequest) (*v1pb.UserAccessToken, error) {
-	userID, err := ExtractUserIDFromName(request.Parent)
+	userID, err := ExtractUserIDFromName(request.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
 	}
@@ -495,8 +415,8 @@ func (s *APIV1Service) CreateUserAccessToken(ctx context.Context, request *v1pb.
 	}
 
 	expiresAt := time.Time{}
-	if request.AccessToken.ExpiresAt != nil {
-		expiresAt = request.AccessToken.ExpiresAt.AsTime()
+	if request.ExpiresAt != nil {
+		expiresAt = request.ExpiresAt.AsTime()
 	}
 
 	accessToken, err := GenerateAccessToken(currentUser.Username, currentUser.ID, expiresAt, []byte(s.Secret))
@@ -521,14 +441,13 @@ func (s *APIV1Service) CreateUserAccessToken(ctx context.Context, request *v1pb.
 	}
 
 	// Upsert the access token to user setting store.
-	if err := s.UpsertAccessTokenToStore(ctx, currentUser, accessToken, request.AccessToken.Description); err != nil {
+	if err := s.UpsertAccessTokenToStore(ctx, currentUser, accessToken, request.Description); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to upsert access token to store: %v", err)
 	}
 
 	userAccessToken := &v1pb.UserAccessToken{
-		Name:        fmt.Sprintf("users/%d/accessTokens/%s", userID, accessToken),
 		AccessToken: accessToken,
-		Description: request.AccessToken.Description,
+		Description: request.Description,
 		IssuedAt:    timestamppb.New(claims.IssuedAt.Time),
 	}
 	if claims.ExpiresAt != nil {
@@ -538,19 +457,10 @@ func (s *APIV1Service) CreateUserAccessToken(ctx context.Context, request *v1pb.
 }
 
 func (s *APIV1Service) DeleteUserAccessToken(ctx context.Context, request *v1pb.DeleteUserAccessTokenRequest) (*emptypb.Empty, error) {
-	// Extract user ID from the access token resource name
-	// Format: users/{user}/accessTokens/{access_token}
-	parts := strings.Split(request.Name, "/")
-	if len(parts) != 4 || parts[0] != "users" || parts[2] != "accessTokens" {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid access token name format: %s", request.Name)
-	}
-
-	userID, err := ExtractUserIDFromName(fmt.Sprintf("users/%s", parts[1]))
+	userID, err := ExtractUserIDFromName(request.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
 	}
-	accessTokenToDelete := parts[3]
-
 	currentUser, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
@@ -568,7 +478,7 @@ func (s *APIV1Service) DeleteUserAccessToken(ctx context.Context, request *v1pb.
 	}
 	updatedUserAccessTokens := []*storepb.AccessTokensUserSetting_AccessToken{}
 	for _, userAccessToken := range userAccessTokens {
-		if userAccessToken.AccessToken == accessTokenToDelete {
+		if userAccessToken.AccessToken == request.AccessToken {
 			continue
 		}
 		updatedUserAccessTokens = append(updatedUserAccessTokens, userAccessToken)
@@ -588,108 +498,6 @@ func (s *APIV1Service) DeleteUserAccessToken(ctx context.Context, request *v1pb.
 	return &emptypb.Empty{}, nil
 }
 
-func (s *APIV1Service) ListUserSessions(ctx context.Context, request *v1pb.ListUserSessionsRequest) (*v1pb.ListUserSessionsResponse, error) {
-	userID, err := ExtractUserIDFromName(request.Parent)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
-	}
-
-	currentUser, err := s.GetCurrentUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
-	}
-	if currentUser == nil {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-	}
-	if currentUser.ID != userID {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-	}
-
-	userSessions, err := s.Store.GetUserSessions(ctx, userID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
-	}
-
-	sessions := []*v1pb.UserSession{}
-	for _, userSession := range userSessions {
-		sessionResponse := &v1pb.UserSession{
-			Name:             fmt.Sprintf("users/%d/sessions/%s", userID, userSession.SessionId),
-			SessionId:        userSession.SessionId,
-			CreateTime:       userSession.CreateTime,
-			ExpireTime:       userSession.ExpireTime,
-			LastAccessedTime: userSession.LastAccessedTime,
-		}
-
-		if userSession.ClientInfo != nil {
-			sessionResponse.ClientInfo = &v1pb.UserSession_ClientInfo{
-				UserAgent:  userSession.ClientInfo.UserAgent,
-				IpAddress:  userSession.ClientInfo.IpAddress,
-				DeviceType: userSession.ClientInfo.DeviceType,
-				Os:         userSession.ClientInfo.Os,
-				Browser:    userSession.ClientInfo.Browser,
-				Country:    userSession.ClientInfo.Country,
-			}
-		}
-
-		sessions = append(sessions, sessionResponse)
-	}
-
-	// Sort by last accessed time in descending order.
-	slices.SortFunc(sessions, func(i, j *v1pb.UserSession) int {
-		return int(j.LastAccessedTime.Seconds - i.LastAccessedTime.Seconds)
-	})
-
-	response := &v1pb.ListUserSessionsResponse{
-		Sessions: sessions,
-	}
-	return response, nil
-}
-
-func (s *APIV1Service) RevokeUserSession(ctx context.Context, request *v1pb.RevokeUserSessionRequest) (*emptypb.Empty, error) {
-	// Extract user ID and session ID from the session resource name
-	// Format: users/{user}/sessions/{session}
-	parts := strings.Split(request.Name, "/")
-	if len(parts) != 4 || parts[0] != "users" || parts[2] != "sessions" {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid session name format: %s", request.Name)
-	}
-
-	userID, err := ExtractUserIDFromName(fmt.Sprintf("users/%s", parts[1]))
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
-	}
-	sessionIDToRevoke := parts[3]
-
-	currentUser, err := s.GetCurrentUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
-	}
-	if currentUser == nil {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-	}
-	if currentUser.ID != userID {
-		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
-	}
-
-	if err := s.Store.RemoveUserSession(ctx, userID, sessionIDToRevoke); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to revoke session: %v", err)
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-// UpsertUserSession adds or updates a user session.
-func (s *APIV1Service) UpsertUserSession(ctx context.Context, userID int32, sessionID string, clientInfo *storepb.SessionsUserSetting_ClientInfo) error {
-	session := &storepb.SessionsUserSetting_Session{
-		SessionId:        sessionID,
-		CreateTime:       timestamppb.Now(),
-		ExpireTime:       timestamppb.New(time.Now().Add(30 * 24 * time.Hour)), // 30 days default
-		LastAccessedTime: timestamppb.Now(),
-		ClientInfo:       clientInfo,
-	}
-
-	return s.Store.AddUserSession(ctx, userID, session)
-}
-
 func (s *APIV1Service) UpsertAccessTokenToStore(ctx context.Context, user *store.User, accessToken, description string) error {
 	userAccessTokens, err := s.Store.GetUserAccessTokens(ctx, user.ID)
 	if err != nil {
@@ -700,7 +508,6 @@ func (s *APIV1Service) UpsertAccessTokenToStore(ctx context.Context, user *store
 		Description: description,
 	}
 	userAccessTokens = append(userAccessTokens, &userAccessToken)
-
 	if _, err := s.Store.UpsertUserSetting(ctx, &storepb.UserSetting{
 		UserId: user.ID,
 		Key:    storepb.UserSettingKey_ACCESS_TOKENS,
@@ -716,11 +523,6 @@ func (s *APIV1Service) UpsertAccessTokenToStore(ctx context.Context, user *store
 }
 
 func convertUserFromStore(user *store.User) *v1pb.User {
-	// Generate etag based on user data
-	etagData := fmt.Sprintf("%d-%d-%s-%s-%s", user.ID, user.UpdatedTs, user.Username, user.Email, user.Nickname)
-	hash := md5.Sum([]byte(etagData))
-	etag := fmt.Sprintf("%x", hash)
-
 	userpb := &v1pb.User{
 		Name:        fmt.Sprintf("%s%d", UserNamePrefix, user.ID),
 		State:       convertStateFromStore(user.RowStatus),
@@ -729,14 +531,13 @@ func convertUserFromStore(user *store.User) *v1pb.User {
 		Role:        convertUserRoleFromStore(user.Role),
 		Username:    user.Username,
 		Email:       user.Email,
-		DisplayName: user.Nickname,
+		Nickname:    user.Nickname,
 		AvatarUrl:   user.AvatarURL,
 		Description: user.Description,
-		Etag:        etag,
 	}
 	// Use the avatar URL instead of raw base64 image data to reduce the response size.
 	if user.AvatarURL != "" {
-		// Check if avatar url is base64 format.
+		// userpb.AvatarUrl = fmt.Sprintf("/file/%s/avatar", userpb.Name)
 		_, _, err := extractImageInfo(user.AvatarURL)
 		if err == nil {
 			userpb.AvatarUrl = fmt.Sprintf("/file/%s/avatar", userpb.Name)

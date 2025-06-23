@@ -12,7 +12,6 @@ import { generateDialog } from "./Dialog";
 const templateList: IdentityProvider[] = [
   {
     name: "",
-    uid: "",
     title: "GitHub",
     type: IdentityProvider_Type.OAUTH2,
     identifierFilter: "",
@@ -24,17 +23,16 @@ const templateList: IdentityProvider[] = [
         tokenUrl: "https://github.com/login/oauth/access_token",
         userInfoUrl: "https://api.github.com/user",
         scopes: ["read:user"],
-        fieldMapping: FieldMapping.fromPartial({
+        fieldMapping: {
           identifier: "login",
           displayName: "name",
           email: "email",
-        }),
+        },
       },
     },
   },
   {
     name: "",
-    uid: "",
     title: "GitLab",
     type: IdentityProvider_Type.OAUTH2,
     identifierFilter: "",
@@ -46,17 +44,16 @@ const templateList: IdentityProvider[] = [
         tokenUrl: "https://gitlab.com/oauth/token",
         userInfoUrl: "https://gitlab.com/oauth/userinfo",
         scopes: ["openid"],
-        fieldMapping: FieldMapping.fromPartial({
+        fieldMapping: {
           identifier: "name",
           displayName: "name",
           email: "email",
-        }),
+        },
       },
     },
   },
   {
     name: "",
-    uid: "",
     title: "Google",
     type: IdentityProvider_Type.OAUTH2,
     identifierFilter: "",
@@ -68,17 +65,16 @@ const templateList: IdentityProvider[] = [
         tokenUrl: "https://oauth2.googleapis.com/token",
         userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
         scopes: ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
-        fieldMapping: FieldMapping.fromPartial({
+        fieldMapping: {
           identifier: "email",
           displayName: "name",
           email: "email",
-        }),
+        },
       },
     },
   },
   {
     name: "",
-    uid: "",
     title: "Custom",
     type: IdentityProvider_Type.OAUTH2,
     identifierFilter: "",
@@ -90,11 +86,11 @@ const templateList: IdentityProvider[] = [
         tokenUrl: "",
         userInfoUrl: "",
         scopes: [],
-        fieldMapping: FieldMapping.fromPartial({
+        fieldMapping: {
           identifier: "",
           displayName: "",
           email: "",
-        }),
+        },
       },
     },
   },
@@ -121,11 +117,11 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
     tokenUrl: "",
     userInfoUrl: "",
     scopes: [],
-    fieldMapping: FieldMapping.fromPartial({
+    fieldMapping: {
       identifier: "",
       displayName: "",
       email: "",
-    }),
+    },
   });
   const [oauth2Scopes, setOAuth2Scopes] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("GitHub");
@@ -249,14 +245,14 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
     <div className="max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg">
       <div className="flex flex-row justify-between items-center mb-4 gap-2 w-full">
         <p>{t(isCreating ? "setting.sso-section.create-sso" : "setting.sso-section.update-sso")}</p>
-        <Button variant="plain" onClick={handleCloseBtnClick}>
+        <Button size="sm" variant="plain" onClick={handleCloseBtnClick}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
       <div className="flex flex-col justify-start items-start w-80">
         {isCreating && (
           <>
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("common.type")}
             </Typography>
             <Select className="w-full mb-4" value={type} onChange={(_, e) => setType(e ?? type)}>
@@ -276,10 +272,10 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
                 </Option>
               ))}
             </Select>
-            <Divider className="my-2!" />
+            <Divider className="!my-2" />
           </>
         )}
-        <Typography className="mb-1!" level="body-md">
+        <Typography className="!mb-1" level="body-md">
           {t("common.name")}
           <span className="text-red-600">*</span>
         </Typography>
@@ -295,7 +291,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
           }
           fullWidth
         />
-        <Typography className="mb-1!" level="body-md">
+        <Typography className="!mb-1" level="body-md">
           {t("setting.sso-section.identifier-filter")}
         </Typography>
         <Input
@@ -310,15 +306,15 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
           }
           fullWidth
         />
-        <Divider className="my-2!" />
+        <Divider className="!my-2" />
         {type === "OAUTH2" && (
           <>
             {isCreating && (
-              <p className="border border-zinc-100 dark:border-zinc-700 rounded-md p-2 text-sm w-full mb-2 break-all">
+              <p className="border rounded-md p-2 text-sm w-full mb-2 break-all">
                 {t("setting.sso-section.redirect-url")}: {absolutifyLink("/auth/callback")}
               </p>
             )}
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.client-id")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -329,7 +325,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setPartialOAuth2Config({ clientId: e.target.value })}
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.client-secret")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -340,7 +336,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setPartialOAuth2Config({ clientSecret: e.target.value })}
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.authorization-endpoint")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -351,7 +347,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setPartialOAuth2Config({ authUrl: e.target.value })}
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.token-endpoint")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -362,7 +358,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setPartialOAuth2Config({ tokenUrl: e.target.value })}
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.user-endpoint")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -373,7 +369,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setPartialOAuth2Config({ userInfoUrl: e.target.value })}
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.scopes")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -384,8 +380,8 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               onChange={(e) => setOAuth2Scopes(e.target.value)}
               fullWidth
             />
-            <Divider className="my-2!" />
-            <Typography className="mb-1!" level="body-md">
+            <Divider className="!my-2" />
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.identifier")}
               <span className="text-red-600">*</span>
             </Typography>
@@ -398,7 +394,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               }
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("setting.sso-section.display-name")}
             </Typography>
             <Input
@@ -410,7 +406,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               }
               fullWidth
             />
-            <Typography className="mb-1!" level="body-md">
+            <Typography className="!mb-1" level="body-md">
               {t("common.email")}
             </Typography>
             <Input
@@ -419,18 +415,6 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
               value={oauth2Config.fieldMapping!.email}
               onChange={(e) =>
                 setPartialOAuth2Config({ fieldMapping: { ...oauth2Config.fieldMapping, email: e.target.value } as FieldMapping })
-              }
-              fullWidth
-            />
-            <Typography className="mb-1!" level="body-md">
-              Avatar URL
-            </Typography>
-            <Input
-              className="mb-2"
-              placeholder={"Avatar URL"}
-              value={oauth2Config.fieldMapping!.avatarUrl}
-              onChange={(e) =>
-                setPartialOAuth2Config({ fieldMapping: { ...oauth2Config.fieldMapping, avatarUrl: e.target.value } as FieldMapping })
               }
               fullWidth
             />

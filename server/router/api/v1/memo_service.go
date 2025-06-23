@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -64,13 +63,13 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 	if err != nil {
 		return nil, err
 	}
-	if len(request.Memo.Attachments) > 0 {
-		_, err := s.SetMemoAttachments(ctx, &v1pb.SetMemoAttachmentsRequest{
-			Name:        fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID),
-			Attachments: request.Memo.Attachments,
+	if len(request.Memo.Resources) > 0 {
+		_, err := s.SetMemoResources(ctx, &v1pb.SetMemoResourcesRequest{
+			Name:      fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID),
+			Resources: request.Memo.Resources,
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to set memo attachments")
+			return nil, errors.Wrap(err, "failed to set memo resources")
 		}
 	}
 	if len(request.Memo.Relations) > 0 {
@@ -100,12 +99,8 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		// Exclude comments by default.
 		ExcludeComments: true,
 	}
-	// Handle deprecated old_filter for backward compatibility
-	if request.OldFilter != "" && request.Filter == "" {
-		//nolint:staticcheck // SA1019: Using deprecated field for backward compatibility
-		if err := s.buildMemoFindWithFilter(ctx, memoFind, request.OldFilter); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to build find memos with filter: %v", err)
-		}
+	if err := s.buildMemoFindWithFilter(ctx, memoFind, request.OldFilter); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to build find memos with filter: %v", err)
 	}
 	if request.Parent != "" && request.Parent != "users/-" {
 		userID, err := ExtractUserIDFromName(request.Parent)
@@ -122,17 +117,9 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		state := store.Normal
 		memoFind.RowStatus = &state
 	}
-
-	// Parse order_by field (replaces the old sort and direction fields)
-	if request.OrderBy != "" {
-		if err := s.parseMemoOrderBy(request.OrderBy, memoFind); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid order_by: %v", err)
-		}
-	} else {
-		// Default ordering by display_time desc
-		memoFind.OrderByTimeAsc = false
+	if request.Direction == v1pb.Direction_ASC {
+		memoFind.OrderByTimeAsc = true
 	}
-
 	if request.Filter != "" {
 		if err := s.validateFilter(ctx, request.Filter); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
@@ -148,7 +135,7 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		memoFind.VisibilityList = []store.Visibility{store.Public}
 	} else {
 		if memoFind.CreatorID == nil {
-			internalFilter := fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "PROTECTED"]`, currentUser.ID)
+			internalFilter := fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "Protected"]`, currentUser.ID)
 			if memoFind.Filter != nil {
 				filter := fmt.Sprintf("(%s) && (%s)", *memoFind.Filter, internalFilter)
 				memoFind.Filter = &filter
@@ -331,13 +318,13 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			payload := memo.Payload
 			payload.Location = convertLocationToStore(request.Memo.Location)
 			update.Payload = payload
-		} else if path == "attachments" {
-			_, err := s.SetMemoAttachments(ctx, &v1pb.SetMemoAttachmentsRequest{
-				Name:        request.Memo.Name,
-				Attachments: request.Memo.Attachments,
+		} else if path == "resources" {
+			_, err := s.SetMemoResources(ctx, &v1pb.SetMemoResourcesRequest{
+				Name:      request.Memo.Name,
+				Resources: request.Memo.Resources,
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to set memo attachments")
+				return nil, errors.Wrap(err, "failed to set memo resources")
 			}
 		} else if path == "relations" {
 			_, err := s.SetMemoRelations(ctx, &v1pb.SetMemoRelationsRequest{
@@ -412,14 +399,14 @@ func (s *APIV1Service) DeleteMemo(ctx context.Context, request *v1pb.DeleteMemoR
 		return nil, status.Errorf(codes.Internal, "failed to delete memo relations")
 	}
 
-	// Delete related attachments.
-	attachments, err := s.Store.ListAttachments(ctx, &store.FindAttachment{MemoID: &memo.ID})
+	// Delete related resources.
+	resources, err := s.Store.ListResources(ctx, &store.FindResource{MemoID: &memo.ID})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list attachments")
+		return nil, status.Errorf(codes.Internal, "failed to list resources")
 	}
-	for _, attachment := range attachments {
-		if err := s.Store.DeleteAttachment(ctx, &store.DeleteAttachment{ID: attachment.ID}); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to delete attachment")
+	for _, resource := range resources {
+		if err := s.Store.DeleteResource(ctx, &store.DeleteResource{ID: resource.ID}); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to delete resource")
 		}
 	}
 
@@ -521,22 +508,10 @@ func (s *APIV1Service) ListMemoComments(ctx context.Context, request *v1pb.ListM
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get memo")
 	}
-
-	currentUser, err := s.GetCurrentUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user")
-	}
-	var memoFilter string
-	if currentUser == nil {
-		memoFilter = `visibility == "PUBLIC"`
-	} else {
-		memoFilter = fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "PROTECTED"]`, currentUser.ID)
-	}
 	memoRelationComment := store.MemoRelationComment
 	memoRelations, err := s.Store.ListMemoRelations(ctx, &store.FindMemoRelation{
 		RelatedMemoID: &memo.ID,
 		Type:          &memoRelationComment,
-		MemoFilter:    &memoFilter,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list memo relations")
@@ -702,9 +677,9 @@ func (s *APIV1Service) dispatchMemoRelatedWebhook(ctx context.Context, memo *v1p
 		}
 		payload.ActivityType = activityType
 		payload.Url = hook.URL
-
-		// Use asynchronous webhook dispatch
-		webhook.PostAsync(payload)
+		if err := webhook.Post(payload); err != nil {
+			return errors.Wrap(err, "failed to post webhook")
+		}
 	}
 	return nil
 }
@@ -751,39 +726,4 @@ func substring(s string, length int) string {
 	}
 
 	return s[:byteIndex]
-}
-
-// parseMemoOrderBy parses the order_by field and sets the appropriate ordering in memoFind.
-func (*APIV1Service) parseMemoOrderBy(orderBy string, memoFind *store.FindMemo) error {
-	// Parse order_by field like "display_time desc" or "create_time asc"
-	parts := strings.Fields(strings.TrimSpace(orderBy))
-	if len(parts) == 0 {
-		return errors.New("empty order_by")
-	}
-
-	field := parts[0]
-	direction := "desc" // default
-	if len(parts) > 1 {
-		direction = strings.ToLower(parts[1])
-		if direction != "asc" && direction != "desc" {
-			return errors.Errorf("invalid order direction: %s, must be 'asc' or 'desc'", parts[1])
-		}
-	}
-
-	switch field {
-	case "display_time":
-		memoFind.OrderByTimeAsc = direction == "asc"
-	case "create_time":
-		memoFind.OrderByTimeAsc = direction == "asc"
-	case "update_time":
-		memoFind.OrderByUpdatedTs = true
-		memoFind.OrderByTimeAsc = direction == "asc"
-	case "name":
-		// For ordering by memo name/id - not commonly used but supported
-		memoFind.OrderByTimeAsc = direction == "asc"
-	default:
-		return errors.Errorf("unsupported order field: %s, supported fields are: display_time, create_time, update_time, name", field)
-	}
-
-	return nil
 }

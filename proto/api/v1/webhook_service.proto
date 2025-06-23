@@ -2,12 +2,9 @@ syntax = "proto3";
 
 package memos.api.v1;
 
-import "api/v1/common.proto";
 import "api/v1/memo_service.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
-import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
@@ -15,191 +12,91 @@ import "google/protobuf/timestamp.proto";
 option go_package = "gen/api/v1";
 
 service WebhookService {
-  // ListWebhooks returns a list of webhooks.
-  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {
-    option (google.api.http) = {get: "/api/v1/webhooks"};
-  }
-
-  // GetWebhook gets a webhook by name.
-  rpc GetWebhook(GetWebhookRequest) returns (Webhook) {
-    option (google.api.http) = {get: "/api/v1/{name=webhooks/*}"};
-    option (google.api.method_signature) = "name";
-  }
-
   // CreateWebhook creates a new webhook.
   rpc CreateWebhook(CreateWebhookRequest) returns (Webhook) {
     option (google.api.http) = {
       post: "/api/v1/webhooks"
-      body: "webhook"
+      body: "*"
     };
-    option (google.api.method_signature) = "webhook";
   }
-
+  // GetWebhook returns a webhook by id.
+  rpc GetWebhook(GetWebhookRequest) returns (Webhook) {
+    option (google.api.http) = {get: "/api/v1/webhooks/{id}"};
+    option (google.api.method_signature) = "id";
+  }
+  // ListWebhooks returns a list of webhooks.
+  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {
+    option (google.api.http) = {get: "/api/v1/webhooks"};
+  }
   // UpdateWebhook updates a webhook.
   rpc UpdateWebhook(UpdateWebhookRequest) returns (Webhook) {
     option (google.api.http) = {
-      patch: "/api/v1/{webhook.name=webhooks/*}"
+      patch: "/api/v1/webhooks/{webhook.id}"
       body: "webhook"
     };
     option (google.api.method_signature) = "webhook,update_mask";
   }
-
-  // DeleteWebhook deletes a webhook.
+  // DeleteWebhook deletes a webhook by id.
   rpc DeleteWebhook(DeleteWebhookRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/api/v1/{name=webhooks/*}"};
-    option (google.api.method_signature) = "name";
+    option (google.api.http) = {delete: "/api/v1/webhooks/{id}"};
+    option (google.api.method_signature) = "id";
   }
 }
 
 message Webhook {
-  option (google.api.resource) = {
-    type: "memos.api.v1/Webhook"
-    pattern: "webhooks/{webhook}"
-    name_field: "name"
-    singular: "webhook"
-    plural: "webhooks"
-  };
+  int32 id = 1;
 
-  // The resource name of the webhook.
-  // Format: webhooks/{webhook}
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  // The name of the creator.
+  string creator = 2;
 
-  // Output only. The system generated unique identifier.
-  string uid = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 3;
 
-  // Required. The display name of the webhook.
-  string display_name = 3 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp update_time = 4;
 
-  // Required. The target URL for the webhook.
-  string url = 4 [(google.api.field_behavior) = REQUIRED];
+  string name = 5;
 
-  // Output only. The resource name of the creator.
-  // Format: users/{user}
-  string creator = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // The state of the webhook.
-  State state = 6 [(google.api.field_behavior) = REQUIRED];
-
-  // Output only. The creation timestamp.
-  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Output only. The last update timestamp.
-  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Output only. The etag for this resource.
-  string etag = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-message ListWebhooksRequest {
-  // Optional. The maximum number of webhooks to return.
-  // The service may return fewer than this value.
-  // If unspecified, at most 50 webhooks will be returned.
-  // The maximum value is 1000; values above 1000 will be coerced to 1000.
-  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Optional. A page token, received from a previous `ListWebhooks` call.
-  // Provide this to retrieve the subsequent page.
-  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Optional. Filter to apply to the list results.
-  // Example: "state=ACTIVE" or "creator=users/123"
-  // Supported operators: =, !=, <, <=, >, >=, :
-  // Supported fields: display_name, url, creator, state, create_time, update_time
-  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Optional. The order to sort results by.
-  // Example: "create_time desc" or "display_name asc"
-  string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
-
-  // Optional. If true, show deleted webhooks in the response.
-  bool show_deleted = 5 [(google.api.field_behavior) = OPTIONAL];
-}
-
-message ListWebhooksResponse {
-  // The list of webhooks.
-  repeated Webhook webhooks = 1;
-
-  // A token that can be sent as `page_token` to retrieve the next page.
-  // If this field is omitted, there are no subsequent pages.
-  string next_page_token = 2;
-
-  // The total count of webhooks (may be approximate).
-  int32 total_size = 3;
-}
-
-message GetWebhookRequest {
-  // Required. The resource name of the webhook.
-  // Format: webhooks/{webhook}
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "memos.api.v1/Webhook"}
-  ];
-
-  // Optional. The fields to return in the response.
-  // If not specified, all fields are returned.
-  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+  string url = 6;
 }
 
 message CreateWebhookRequest {
-  // Required. The webhook to create.
-  Webhook webhook = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.field_behavior) = INPUT_ONLY
-  ];
+  string name = 1;
 
-  // Optional. The webhook ID to use for this webhook.
-  // If empty, a unique ID will be generated.
-  // Must match the pattern [a-z0-9-]+
-  string webhook_id = 2 [(google.api.field_behavior) = OPTIONAL];
+  string url = 2;
+}
 
-  // Optional. If set, validate the request but don't actually create the webhook.
-  bool validate_only = 3 [(google.api.field_behavior) = OPTIONAL];
+message GetWebhookRequest {
+  int32 id = 1;
+}
 
-  // Optional. An idempotency token that can be used to ensure that multiple
-  // requests to create a webhook have the same result.
-  string request_id = 4 [(google.api.field_behavior) = OPTIONAL];
+message ListWebhooksRequest {
+  // The name of the creator.
+  string creator = 2;
+}
+
+message ListWebhooksResponse {
+  repeated Webhook webhooks = 1;
 }
 
 message UpdateWebhookRequest {
-  // Required. The webhook to update.
-  Webhook webhook = 1 [(google.api.field_behavior) = REQUIRED];
+  Webhook webhook = 1;
 
-  // Required. The list of fields to update.
-  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Optional. If set to true, allows updating sensitive fields.
-  bool allow_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message DeleteWebhookRequest {
-  // Required. The resource name of the webhook to delete.
-  // Format: webhooks/{webhook}
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "memos.api.v1/Webhook"}
-  ];
-
-  // Optional. If set to true, the webhook will be deleted even if it has associated data.
-  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+  int32 id = 1;
 }
 
 message WebhookRequestPayload {
-  // The target URL for the webhook request.
-  string url = 1 [(google.api.field_behavior) = REQUIRED];
+  string url = 1;
 
-  // The type of activity that triggered this webhook.
-  string activity_type = 2 [(google.api.field_behavior) = REQUIRED];
+  string activity_type = 2;
 
-  // The resource name of the creator.
+  // The name of the creator.
   // Format: users/{user}
-  string creator = 3 [
-    (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "memos.api.v1/User"}
-  ];
+  string creator = 3;
 
-  // The creation timestamp of the activity.
-  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 4;
 
-  // The memo that triggered this webhook (if applicable).
-  Memo memo = 5 [(google.api.field_behavior) = OPTIONAL];
+  Memo memo = 5;
 }

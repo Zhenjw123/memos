@@ -36,7 +36,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, _ *v1pb.ListAllUser
 		memoFind.VisibilityList = []store.Visibility{store.Public}
 	} else {
 		if memoFind.CreatorID == nil {
-			internalFilter := fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "PROTECTED"]`, currentUser.ID)
+			internalFilter := fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "Protected"]`, currentUser.ID)
 			if memoFind.Filter != nil {
 				filter := fmt.Sprintf("(%s) && (%s)", *memoFind.Filter, internalFilter)
 				memoFind.Filter = &filter
@@ -51,28 +51,51 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, _ *v1pb.ListAllUser
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list memos: %v", err)
 	}
-
-	userMemoStatMap := make(map[int32]*v1pb.UserStats)
+	userStatsMap := map[string]*v1pb.UserStats{}
 	for _, memo := range memos {
+		creator := fmt.Sprintf("%s%d", UserNamePrefix, memo.CreatorID)
+		if _, ok := userStatsMap[creator]; !ok {
+			userStatsMap[creator] = &v1pb.UserStats{
+				Name:                  creator,
+				MemoDisplayTimestamps: []*timestamppb.Timestamp{},
+				MemoTypeStats:         &v1pb.UserStats_MemoTypeStats{},
+				TagCount:              map[string]int32{},
+			}
+		}
 		displayTs := memo.CreatedTs
 		if workspaceMemoRelatedSetting.DisplayWithUpdateTime {
 			displayTs = memo.UpdatedTs
 		}
-		userMemoStatMap[memo.CreatorID] = &v1pb.UserStats{
-			Name: fmt.Sprintf("users/%d/stats", memo.CreatorID),
+		userStats := userStatsMap[creator]
+		userStats.MemoDisplayTimestamps = append(userStats.MemoDisplayTimestamps, timestamppb.New(time.Unix(displayTs, 0)))
+		// Handle duplicated tags.
+		for _, tag := range memo.Payload.Tags {
+			userStats.TagCount[tag]++
 		}
-		userMemoStatMap[memo.CreatorID].MemoDisplayTimestamps = append(userMemoStatMap[memo.CreatorID].MemoDisplayTimestamps, timestamppb.New(time.Unix(displayTs, 0)))
+		if memo.Pinned {
+			userStats.PinnedMemos = append(userStats.PinnedMemos, fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID))
+		}
+		if memo.Payload.Property.GetHasLink() {
+			userStats.MemoTypeStats.LinkCount++
+		}
+		if memo.Payload.Property.GetHasCode() {
+			userStats.MemoTypeStats.CodeCount++
+		}
+		if memo.Payload.Property.GetHasTaskList() {
+			userStats.MemoTypeStats.TodoCount++
+		}
+		if memo.Payload.Property.GetHasIncompleteTasks() {
+			userStats.MemoTypeStats.UndoCount++
+		}
+		userStats.TotalMemoCount++
 	}
-
-	userMemoStats := []*v1pb.UserStats{}
-	for _, userMemoStat := range userMemoStatMap {
-		userMemoStats = append(userMemoStats, userMemoStat)
+	userStatsList := []*v1pb.UserStats{}
+	for _, userStats := range userStatsMap {
+		userStatsList = append(userStatsList, userStats)
 	}
-
-	response := &v1pb.ListAllUserStatsResponse{
-		UserStats: userMemoStats,
-	}
-	return response, nil
+	return &v1pb.ListAllUserStatsResponse{
+		UserStats: userStatsList,
+	}, nil
 }
 
 func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserStatsRequest) (*v1pb.UserStats, error) {
@@ -80,27 +103,32 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
 	}
-
-	currentUser, err := s.GetCurrentUser(ctx)
+	user, err := s.Store.GetUser(ctx, &store.FindUser{ID: &userID})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
 
 	normalStatus := store.Normal
 	memoFind := &store.FindMemo{
-		CreatorID: &userID,
 		// Exclude comments by default.
 		ExcludeComments: true,
 		ExcludeContent:  true,
+		CreatorID:       &userID,
 		RowStatus:       &normalStatus,
 	}
 
-	if currentUser == nil {
-		memoFind.VisibilityList = []store.Visibility{store.Public}
-	} else if currentUser.ID != userID {
-		memoFind.VisibilityList = []store.Visibility{store.Public, store.Protected}
+	currentUser, err := s.GetCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
-
+	visibilities := []store.Visibility{store.Public}
+	if currentUser != nil {
+		visibilities = append(visibilities, store.Protected)
+		if currentUser.ID == user.ID {
+			visibilities = append(visibilities, store.Private)
+		}
+	}
+	memoFind.VisibilityList = visibilities
 	memos, err := s.Store.ListMemos(ctx, memoFind)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list memos: %v", err)
@@ -110,62 +138,38 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get workspace memo related setting")
 	}
-
-	displayTimestamps := []*timestamppb.Timestamp{}
-	tagCount := make(map[string]int32)
-	linkCount := int32(0)
-	codeCount := int32(0)
-	todoCount := int32(0)
-	undoCount := int32(0)
-	pinnedMemos := []string{}
-
+	userStats := &v1pb.UserStats{
+		Name:                  fmt.Sprintf("%s%d", UserNamePrefix, user.ID),
+		MemoDisplayTimestamps: []*timestamppb.Timestamp{},
+		MemoTypeStats:         &v1pb.UserStats_MemoTypeStats{},
+		TagCount:              map[string]int32{},
+		TotalMemoCount:        int32(len(memos)),
+	}
 	for _, memo := range memos {
 		displayTs := memo.CreatedTs
 		if workspaceMemoRelatedSetting.DisplayWithUpdateTime {
 			displayTs = memo.UpdatedTs
 		}
-		displayTimestamps = append(displayTimestamps, timestamppb.New(time.Unix(displayTs, 0)))
-		// Count different memo types based on content.
-		if memo.Payload != nil {
-			for _, tag := range memo.Payload.Tags {
-				if tagCount[tag] == 0 {
-					tagCount[tag] = 1
-				}
-				tagCount[tag]++
-			}
-			if memo.Payload.Property != nil {
-				if memo.Payload.Property.HasLink {
-					linkCount++
-				}
-				if memo.Payload.Property.HasCode {
-					codeCount++
-				}
-				if memo.Payload.Property.HasTaskList {
-					todoCount++
-				}
-				if memo.Payload.Property.HasIncompleteTasks {
-					undoCount++
-				}
-			}
+		userStats.MemoDisplayTimestamps = append(userStats.MemoDisplayTimestamps, timestamppb.New(time.Unix(displayTs, 0)))
+		// Handle duplicated tags.
+		for _, tag := range memo.Payload.Tags {
+			userStats.TagCount[tag]++
 		}
 		if memo.Pinned {
-			pinnedMemos = append(pinnedMemos, fmt.Sprintf("users/%d/memos/%d", userID, memo.ID))
+			userStats.PinnedMemos = append(userStats.PinnedMemos, fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID))
+		}
+		if memo.Payload.Property.GetHasLink() {
+			userStats.MemoTypeStats.LinkCount++
+		}
+		if memo.Payload.Property.GetHasCode() {
+			userStats.MemoTypeStats.CodeCount++
+		}
+		if memo.Payload.Property.GetHasTaskList() {
+			userStats.MemoTypeStats.TodoCount++
+		}
+		if memo.Payload.Property.GetHasIncompleteTasks() {
+			userStats.MemoTypeStats.UndoCount++
 		}
 	}
-
-	userStats := &v1pb.UserStats{
-		Name:                  fmt.Sprintf("users/%d/stats", userID),
-		MemoDisplayTimestamps: displayTimestamps,
-		TagCount:              tagCount,
-		PinnedMemos:           pinnedMemos,
-		TotalMemoCount:        int32(len(memos)),
-		MemoTypeStats: &v1pb.UserStats_MemoTypeStats{
-			LinkCount: linkCount,
-			CodeCount: codeCount,
-			TodoCount: todoCount,
-			UndoCount: undoCount,
-		},
-	}
-
 	return userStats, nil
 }

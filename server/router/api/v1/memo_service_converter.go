@@ -61,11 +61,11 @@ func (s *APIV1Service) convertMemoFromStore(ctx context.Context, memo *store.Mem
 	}
 	memoMessage.Relations = listMemoRelationsResponse.Relations
 
-	listMemoAttachmentsResponse, err := s.ListMemoAttachments(ctx, &v1pb.ListMemoAttachmentsRequest{Name: name})
+	listMemoResourcesResponse, err := s.ListMemoResources(ctx, &v1pb.ListMemoResourcesRequest{Name: name})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list memo attachments")
+		return nil, errors.Wrap(err, "failed to list memo resources")
 	}
-	memoMessage.Attachments = listMemoAttachmentsResponse.Attachments
+	memoMessage.Resources = listMemoResourcesResponse.Resources
 
 	listMemoReactionsResponse, err := s.ListMemoReactions(ctx, &v1pb.ListMemoReactionsRequest{Name: name})
 	if err != nil {

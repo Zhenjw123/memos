@@ -35,24 +35,15 @@ var (
 	_ = metadata.Join
 )
 
-var filter_InboxService_ListInboxes_0 = &utilities.DoubleArray{Encoding: map[string]int{"parent": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+var filter_InboxService_ListInboxes_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_InboxService_ListInboxes_0(ctx context.Context, marshaler runtime.Marshaler, client InboxServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ListInboxesRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["parent"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent")
-	}
-	protoReq.Parent, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent", err)
 	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -68,16 +59,7 @@ func local_request_InboxService_ListInboxes_0(ctx context.Context, marshaler run
 	var (
 		protoReq ListInboxesRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["parent"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent")
-	}
-	protoReq.Parent, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -220,7 +202,7 @@ func RegisterInboxServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/memos.api.v1.InboxService/ListInboxes", runtime.WithHTTPPathPattern("/api/v1/{parent=users/*}/inboxes"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/memos.api.v1.InboxService/ListInboxes", runtime.WithHTTPPathPattern("/api/v1/inboxes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -318,7 +300,7 @@ func RegisterInboxServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.InboxService/ListInboxes", runtime.WithHTTPPathPattern("/api/v1/{parent=users/*}/inboxes"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.InboxService/ListInboxes", runtime.WithHTTPPathPattern("/api/v1/inboxes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -369,7 +351,7 @@ func RegisterInboxServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_InboxService_ListInboxes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3, 2, 4}, []string{"api", "v1", "users", "parent", "inboxes"}, ""))
+	pattern_InboxService_ListInboxes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "inboxes"}, ""))
 	pattern_InboxService_UpdateInbox_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3}, []string{"api", "v1", "inboxes", "inbox.name"}, ""))
 	pattern_InboxService_DeleteInbox_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3}, []string{"api", "v1", "inboxes", "name"}, ""))
 )

@@ -29,22 +29,24 @@ const List: React.FC<Props> = ({ kind, indent, children }: Props) => {
   };
 
   const getAttributes = () => {
-    const attrs: any = {
-      style: { paddingLeft: `${indent > 0 ? indent * 10 : 20}px` },
-    };
-    const firstChild = head(children);
-    if (firstChild?.type === NodeType.ORDERED_LIST_ITEM) {
-      attrs.start = firstChild.orderedListItemNode?.number;
-    } else if (firstChild?.type === NodeType.TASK_LIST_ITEM) {
-      attrs.style = { paddingLeft: `${indent * 8}px` };
+    if (kind === ListNode_Kind.ORDERED) {
+      const firstChild = head(children);
+      if (firstChild?.type === NodeType.ORDERED_LIST_ITEM) {
+        return {
+          start: firstChild.orderedListItemNode?.number,
+        };
+      }
     }
-    return attrs;
+    return {};
   };
 
   return React.createElement(
     getListContainer(),
     {
-      className: cn(kind === ListNode_Kind.ORDERED ? "list-decimal" : kind === ListNode_Kind.UNORDERED ? "list-disc" : "list-none"),
+      className: cn(
+        `list-inside ${kind === ListNode_Kind.ORDERED ? "list-decimal" : kind === ListNode_Kind.UNORDERED ? "list-disc" : "list-none"}`,
+        indent > 0 ? `pl-${2 * indent}` : "",
+      ),
       ...getAttributes(),
     },
     children.map((child, index) => {

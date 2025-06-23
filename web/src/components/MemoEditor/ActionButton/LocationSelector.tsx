@@ -94,7 +94,7 @@ const LocationSelector = (props: Props) => {
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <Button className="flex items-center justify-center p-0" size="sm" variant="plain">
+        <Button className="flex items-center justify-center" size="sm" variant="plain">
           <MapPinIcon className="w-5 h-5 mx-auto shrink-0" />
           {props.location && (
             <>
@@ -105,7 +105,7 @@ const LocationSelector = (props: Props) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="center">
-        <div className="min-w-80 sm:w-lg p-1 flex flex-col justify-start items-start">
+        <div className="min-w-80 sm:w-128 flex flex-col justify-start items-start">
           <LeafletMap key={JSON.stringify(state.initilized)} latlng={state.position} onChange={onPositionChanged} />
           <div className="mt-2 w-full flex flex-row justify-between items-center gap-2">
             <div className="flex flex-row items-center justify-start gap-2">
@@ -115,9 +115,9 @@ const LocationSelector = (props: Props) => {
                 size="sm"
                 startDecorator={
                   state.position && (
-                    <div className="text-xs leading-6 opacity-60">
+                    <span className="text-xs opacity-60">
                       [{state.position.lat.toFixed(2)}, {state.position.lng.toFixed(2)}]
-                    </div>
+                    </span>
                   )
                 }
                 disabled={!state.position}

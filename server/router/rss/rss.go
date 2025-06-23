@@ -12,8 +12,8 @@ import (
 	"github.com/usememos/gomark"
 	"github.com/usememos/gomark/renderer"
 
-	"github.com/usememos/memos/internal/profile"
 	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/usememos/memos/server/profile"
 	"github.com/usememos/memos/store"
 )
 
@@ -24,11 +24,6 @@ const (
 type RSSService struct {
 	Profile *profile.Profile
 	Store   *store.Store
-}
-
-type RSSHeading struct {
-	Title       string
-	Description string
 }
 
 func NewRSSService(profile *profile.Profile, store *store.Store) *RSSService {
@@ -98,14 +93,10 @@ func (s *RSSService) GetUserRSS(c echo.Context) error {
 }
 
 func (s *RSSService) generateRSSFromMemoList(ctx context.Context, memoList []*store.Memo, baseURL string) (string, error) {
-	rssHeading, err := getRSSHeading(ctx, s.Store)
-	if err != nil {
-		return "", err
-	}
 	feed := &feeds.Feed{
-		Title:       rssHeading.Title,
+		Title:       "Deep Note",
 		Link:        &feeds.Link{Href: baseURL},
-		Description: rssHeading.Description,
+		Description: "An open source, lightweight note-taking service. Easily capture and share your great thoughts.",
 		Created:     time.Now(),
 	}
 
@@ -124,22 +115,22 @@ func (s *RSSService) generateRSSFromMemoList(ctx context.Context, memoList []*st
 			Created:     time.Unix(memo.CreatedTs, 0),
 			Id:          link.Href,
 		}
-		attachments, err := s.Store.ListAttachments(ctx, &store.FindAttachment{
+		resources, err := s.Store.ListResources(ctx, &store.FindResource{
 			MemoID: &memo.ID,
 		})
 		if err != nil {
 			return "", err
 		}
-		if len(attachments) > 0 {
-			attachment := attachments[0]
+		if len(resources) > 0 {
+			resource := resources[0]
 			enclosure := feeds.Enclosure{}
-			if attachment.StorageType == storepb.AttachmentStorageType_EXTERNAL || attachment.StorageType == storepb.AttachmentStorageType_S3 {
-				enclosure.Url = attachment.Reference
+			if resource.StorageType == storepb.ResourceStorageType_EXTERNAL || resource.StorageType == storepb.ResourceStorageType_S3 {
+				enclosure.Url = resource.Reference
 			} else {
-				enclosure.Url = fmt.Sprintf("%s/file/attachments/%s/%s", baseURL, attachment.UID, attachment.Filename)
+				enclosure.Url = fmt.Sprintf("%s/file/resources/%d/%s", baseURL, resource.ID, resource.Filename)
 			}
-			enclosure.Length = strconv.Itoa(int(attachment.Size))
-			enclosure.Type = attachment.Type
+			enclosure.Length = strconv.Itoa(int(resource.Size))
+			enclosure.Type = resource.Type
 			feed.Items[i].Enclosure = &enclosure
 		}
 	}
@@ -158,22 +149,4 @@ func getRSSItemDescription(content string) (string, error) {
 	}
 	result := renderer.NewHTMLRenderer().Render(nodes)
 	return result, nil
-}
-
-func getRSSHeading(ctx context.Context, stores *store.Store) (RSSHeading, error) {
-	settings, err := stores.GetWorkspaceGeneralSetting(ctx)
-	if err != nil {
-		return RSSHeading{}, err
-	}
-	if settings == nil || settings.CustomProfile == nil {
-		return RSSHeading{
-			Title:       "Deep Note",
-			Description: "A lightweight note-taking service. Easily capture and share your great thoughts.",
-		}, nil
-	}
-	customProfile := settings.CustomProfile
-	return RSSHeading{
-		Title:       customProfile.Title,
-		Description: customProfile.Description,
-	}, nil
 }

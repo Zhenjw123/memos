@@ -20,7 +20,6 @@
     "admin": "管理",
     "archive": "归档",
     "archived": "已归档",
-    "attachments": "附件",
     "avatar": "头像",
     "basic": "基础",
     "beta": "测试",
@@ -48,11 +47,10 @@
     "input": "输入",
     "language": "语言",
     "last-updated-at": "最后更新时间",
-    "layout": "布局",
     "learn-more": "了解更多",
     "link": "链接",
     "mark": "引用",
-    "memos": "备忘录",
+    "memos": "Deep Note 随想笔记",
     "name": "名称",
     "new": "新建",
     "nickname": "昵称",
@@ -109,8 +107,7 @@
   "editor": {
     "add-your-comment-here": "请输入您的评论...",
     "any-thoughts": "此刻的想法...",
-    "save": "保存",
-    "no-changes-detected": "未检测到更改"
+    "save": "保存"
   },
   "filters": {
     "has-code": "有代码",
@@ -159,9 +156,7 @@
       "private": "私有",
       "protected": "工作区",
       "public": "公开"
-    },
-    "list": "列表模式",
-    "masonry": "瀑布流模式"
+    }
   },
   "message": {
     "archived-successfully": "归档成功",
@@ -217,8 +212,7 @@
     "no-unused-resources": "没有可删除的资源",
     "reset-link": "重置链接",
     "reset-link-prompt": "您确定要重置链接吗？这将导致当前使用的链接失效。（此操作不可逆）",
-    "reset-resource-link": "重置资源链接",
-    "unused-resources": "未使用到的资源"
+    "reset-resource-link": "重置资源链接"
   },
   "router": {
     "back-to-top": "回到顶部",
