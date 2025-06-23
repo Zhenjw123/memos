@@ -167,8 +167,8 @@ func getRSSHeading(ctx context.Context, stores *store.Store) (RSSHeading, error)
 	}
 	if settings == nil || settings.CustomProfile == nil {
 		return RSSHeading{
-			Title:       "Memos",
-			Description: "An open source, lightweight note-taking service. Easily capture and share your great thoughts.",
+			Title:       "Deep Note",
+			Description: "A lightweight note-taking service. Easily capture and share your great thoughts.",
 		}, nil
 	}
 	customProfile := settings.CustomProfile

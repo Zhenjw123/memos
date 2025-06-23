@@ -11,7 +11,7 @@ interface Props {
 const BrandBanner = observer((props: Props) => {
   const { collapsed } = props;
   const workspaceGeneralSetting = workspaceStore.state.generalSetting;
-  const title = workspaceGeneralSetting.customProfile?.title || "Memos";
+  const title = workspaceGeneralSetting.customProfile?.title || "Deep Note";
   const avatarUrl = workspaceGeneralSetting.customProfile?.logoUrl || "/full-logo.webp";
 
   return (

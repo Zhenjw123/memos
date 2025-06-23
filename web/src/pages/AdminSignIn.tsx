@@ -12,7 +12,7 @@ const AdminSignIn = observer(() => {
         <div className="w-full flex flex-row justify-center items-center mb-6">
           <img className="h-14 w-auto rounded-full shadow" src={workspaceGeneralSetting.customProfile?.logoUrl || "/logo.webp"} alt="" />
           <p className="ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
-            {workspaceGeneralSetting.customProfile?.title || "Memos"}
+            {workspaceGeneralSetting.customProfile?.title || "Deep Note"}
           </p>
         </div>
         <p className="w-full text-xl font-medium dark:text-gray-500">Sign in with admin accounts</p>

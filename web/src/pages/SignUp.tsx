@@ -63,7 +63,7 @@ const SignUp = observer(() => {
         <div className="w-full flex flex-row justify-center items-center mb-6">
           <img className="h-14 w-auto rounded-full shadow" src={workspaceGeneralSetting.customProfile?.logoUrl || "/logo.webp"} alt="" />
           <p className="ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
-            {workspaceGeneralSetting.customProfile?.title || "Memos"}
+            {workspaceGeneralSetting.customProfile?.title || "Deep Note"}
           </p>
         </div>
         {!workspaceGeneralSetting.disallowUserRegistration ? (
@@ -116,12 +116,20 @@ const SignUp = observer(() => {
                   {t("common.sign-up")}
                   {actionBtnLoadingState.isLoading && <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />}
                 </Button>
-              </div>
+              </div> 
+              <div className="w-full mt-4 text-sm text-center">
+                    已有账号？
+                <Link to="/auth" className="cursor-pointer ml-2 text-blue-600 hover:underline" viewTransition>
+                  立即登录
+                </Link>
+             </div>
             </form>
+           
           </>
         ) : (
           <p className="w-full text-2xl mt-2 dark:text-gray-500">Sign up is not allowed.</p>
-        )}
+        )
+        }
         {!workspaceStore.state.profile.owner ? (
           <p className="w-full mt-4 text-sm font-medium dark:text-gray-500">{t("auth.host-tip")}</p>
         ) : (

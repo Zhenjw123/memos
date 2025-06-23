@@ -69,7 +69,7 @@ const WorkspaceSection = observer(() => {
       <div className="w-full flex flex-row justify-between items-center">
         <div>
           {t("setting.system-section.server-name")}:{" "}
-          <span className="font-mono font-bold">{workspaceGeneralSetting.customProfile?.title || "Memos"}</span>
+          <span className="font-mono font-bold">{workspaceGeneralSetting.customProfile?.title || "Deep Note"}</span>
         </div>
         <Button variant="outlined" onClick={handleUpdateCustomizedProfileButtonClick}>
           {t("common.edit")}
