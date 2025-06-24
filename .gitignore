@@ -15,7 +15,7 @@ build
 # Docker Compose Environment File
 .env
 
-dist
+
 
 # VSCode settings
 .vscode
