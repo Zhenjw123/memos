@@ -1,7 +1,9 @@
 @echo off
 echo 正在启动后端服务...
-start cmd /k "cd /d %~dp0\bin\memos && go run main.go --mode dev --port 8081  --driver sqlite --dsn memos.db"
-
+@REM sqlite
+@REM start cmd /k "cd /d %~dp0\bin\memos && go run main.go --mode dev --port 8081  --driver sqlite --dsn memos.db"
+@REM MySql
+start cmd /k "cd /d %~dp0\bin\memos && go run main.go --mode dev --port 8081  --driver mysql --dsn deepnote:Deepnote123@tcp(rm-bp15e0zk2w76cjjahno.mysql.rds.aliyuncs.com:3306)/deepnote"
 echo 正在启动前端服务...
 start cmd /k "cd /d %~dp0\web && pnpm dev"
 
