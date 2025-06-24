@@ -8,7 +8,7 @@ import { isValidateLocale } from "@/utils/i18n";
 import { workspaceSettingNamePrefix } from "../v1";
 
 class LocalState {
-  locale: string = "en";
+  locale: string = "zh-Hans";
   appearance: string = "system";
   profile: WorkspaceProfile = WorkspaceProfile.fromPartial({});
   settings: WorkspaceSetting[] = [];
@@ -37,7 +37,7 @@ class LocalState {
       ...partial,
     };
     if (!isValidateLocale(finalState.locale)) {
-      finalState.locale = "en";
+      finalState.locale = "zh-Hans";
     }
     if (!["system", "light", "dark"].includes(finalState.appearance)) {
       finalState.appearance = "system";

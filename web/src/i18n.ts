@@ -39,12 +39,12 @@ export const locales = orderBy([
 const fallbacks = {
   "zh-HK": ["zh-Hant", "en"],
   "zh-TW": ["zh-Hant", "en"],
-  zh: ["zh-Hans", "en"],
+  "zh": ["zh-Hans", "en"],
 } as FallbackLngObjList;
 
 const LazyImportPlugin: BackendModule = {
   type: "backend",
-  init: function () {},
+  init: function () { },
   read: function (language, _, callback) {
     const matchedLanguage = findNearestMatchedLanguage(language);
     import(`./locales/${matchedLanguage}.json`)
@@ -66,7 +66,7 @@ i18n
     },
     fallbackLng: {
       ...fallbacks,
-      ...{ default: ["en"] },
+      ...{ default: ["zh-Hans"] },
     } as FallbackLng,
   });
 
