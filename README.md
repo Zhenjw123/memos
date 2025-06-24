@@ -1,58 +1,45 @@
-# Memos - Open Source, Self-hosted, Your Notes, Your Way
+# DeepNote：一站式笔记协作与知识共享管理平台
+<img align="right" height="96px" src="web\public\full-logo.webp" alt="DeepNote" />
+DeepNote基于Memos，是一个现代的、开源的、自托管的知识管理和笔记平台，专为注重隐私的用户和组织而设计。支持Markdown和捕获、组织、管理你的个人笔记。
 
-<img align="right" height="96px" src="https://www.usememos.com/logo-rounded.png" alt="Memos" />
 
-An open-source, self-hosted note-taking solution designed for seamless deployment and multi-platform access. Experience effortless plain text writing with pain-free, complemented by robust Markdown syntax support for enhanced formatting.
-
-<a href="https://www.usememos.com">Home Page</a> •
-<a href="https://www.usememos.com/blog">Blogs</a> •
-<a href="https://www.usememos.com/docs">Docs</a> •
-<a href="https://demo.usememos.com/">Live Demo</a>
-
-<p>
-  <a href="https://hub.docker.com/r/neosmemo/memos"><img alt="Docker pull" src="https://img.shields.io/docker/pulls/neosmemo/memos.svg"/></a>
-  <a href="https://hub.docker.com/r/neosmemo/memos"><img alt="Docker image size" src="https://img.shields.io/docker/image-size/neosmemo/memos?sort=semver"/></a>
-  <a href="https://discord.gg/tfPJa4UmAv"><img alt="Discord" src="https://img.shields.io/badge/discord-chat-5865f2?logo=discord&logoColor=f5f5f5" /></a>
-</p>
-
-![demo](https://www.usememos.com/demo.png)
-
-## Features
-
-- **Privacy First** 🏡: Your data, your control. All runtime data is securely stored in your local database.
-- **Create at Speed** ✍️: Write and save content as plain text for quick access, with Markdown support for fast formatting and easy sharing.
-- **Lightweight but Powerful** ⚡: Built with Go and React.js, our app combines a compact architecture with powerful performance.
-- **Customizable** 🧩: Personalize your experience by customizing the server name, icon, description, theme, and execution scripts.
-- **Open Source** 🦦: Fully open source, with all code available on GitHub for transparency and collaboration.
-- **Free to Use** 💸: Enjoy all features at no cost, no hidden fees, no subscriptions.
-
-## Deploy with Docker in seconds
-
+![demo](web\public\demo.png)
+## 核心功能
+- Markdown格式笔记
+- 笔记分享与互动
+- 笔记TAG与待办管理
+- 笔记相册管理
+- 工作区管理
+## 快速开始
+### 环境要求
+- Go 1.24 or later
+- Node.js 22+ and pnpm
+- Git for version control
+### 项目部署
+本项目使用go后端和react前端搭建框架，前端使用pnpm管理包，在准备了以上环境之后，项目部署需要进行以下操作
 ```bash
-docker run -d --name memos -p 5230:5230 -v ~/.memos/:/var/opt/memos neosmemo/memos:stable
+# go开启国内镜像源
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn,direct
+go mod tidy
+# 或者go mod download
+
+# 前端下载包与运行
+cd web
+pnpm install
 ```
 
-> [!NOTE]
-> This command is only applicable for Unix/Linux systems. For Windows, please refer to the detailed [documentation](https://www.usememos.com/docs/install/container-install#docker-on-windows).
->
-> The `~/.memos/` directory will be used as the data directory on your local machine, while `/var/opt/memos` is the directory of the volume in Docker and should not be modified.
+### 项目启动
+```bash
+# 后端运行
+go run ./bin/memos/main.go --mode dev --port 8081
+# 前端新开一个客户端
+cd web
+pnpm dev
+```
+或者，可以使用我们准备的一键部署脚本
+```bash
+# Windows
+./start.bat
+```
 
-Learn more about [other installation methods](https://www.usememos.com/docs/install).
-
-> [!WARNING]
-> Memos is still under active development, so you may encounter bugs or breaking changes as we improve.
-
-## Contribution
-
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. We greatly appreciate any contributions you make. Thank you for being a part of our community! 🥰
-
-Guide to [contribution](https://www.usememos.com/docs/contribution/development).
-
-## Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=usememos/memos&type=Date)](https://star-history.com/#usememos/memos&Date)
-
-## Other Projects
-
-- [**Slash**](https://github.com/yourselfhosted/slash): An open source, self-hosted bookmarks and link sharing platform. Save and share your links very easily.
-- [**Gomark**](https://github.com/usememos/gomark): A markdown parser written in Go for Memos. And its [WebAssembly version](https://github.com/usememos/gomark-wasm) is also available.
