@@ -1,9 +1,9 @@
 # DeepNote：一站式笔记协作与知识共享管理平台
-<img align="right" height="96px" src="web\public\full-logo.webp" alt="DeepNote" />
+<img align="right" height="96px" src="web/public/full-logo.webp" alt="DeepNote" />
 DeepNote基于Memos，是一个现代的、开源的、自托管的知识管理和笔记平台，专为注重隐私的用户和组织而设计。支持Markdown和捕获、组织、管理你的个人笔记。
 
 
-![demo](web\public\demo.png)
+![demo](web/public/demo.png)
 ## 核心功能
 - Markdown格式笔记
 - 笔记分享与互动
