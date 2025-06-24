@@ -85,7 +85,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@bufbuild/buf",
-      "esbuild"
+      "core-js",
+      "esbuild",
+      "protobufjs"
     ]
   }
 }
