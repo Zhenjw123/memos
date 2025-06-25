@@ -1,7 +1,7 @@
 {
   "about": {
     "blogs": "博客",
-    "description": "Memos 是一个隐私优先、轻量级的笔记解决方案，可以轻松捕捉和分享你的想法。",
+    "description": "DeepNote 是一个隐私优先、轻量级的笔记解决方案，可以轻松捕捉和分享你的想法。",
     "documents": "文档",
     "github-repository": "GitHub 仓库",
     "official-website": "官网"
@@ -147,8 +147,8 @@
     "remove-completed-task-list-items": "移除已办",
     "remove-completed-task-list-items-confirm": "您确定要移除所有完成的待办吗？（此操作不可逆）",
     "search-placeholder": "搜索备忘录",
-    "show-less": "显示较少",
-    "show-more": "查看更多",
+    "show-less": "收起",
+    "show-more": "展开",
     "to-do": "待办",
     "view-detail": "查看详情",
     "visibility": {
@@ -373,11 +373,11 @@
       "create-dialog": {
         "an-easy-to-remember-name": "请输入一个容易记住的标题",
         "create-webhook": "创建 Webhook",
-        "edit-webhook": "编辑 webhook",
+        "edit-webhook": "编辑 Webhook",
         "payload-url": "请输入有效的 URL",
         "title": "标题"
       },
-      "no-webhooks-found": "没有 webhooks。"
+      "no-webhooks-found": "没有 Webhooks。"
     },
     "workspace-section": {
       "disallow-change-nickname": "禁止修改用户昵称",
