@@ -1,5 +1,5 @@
 import { Tooltip } from "@mui/joy";
-import { BookmarkIcon, EyeOffIcon, MessageCircleMoreIcon } from "lucide-react";
+import { Bot, BookmarkIcon, EyeOffIcon, MessageCircleMoreIcon } from "lucide-react";
 import { memo, useCallback, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
@@ -182,6 +182,11 @@ const MemoView: React.FC<Props> = (props: Props) => {
                   </Tooltip>
                 )}
                 {currentUser && !isArchived && <ReactionSelector className="border-none w-auto h-auto" memo={memo} />}
+                <Tooltip title="AI 总结" placement="top">
+                  <span className="cursor-pointer flex justify-center items-center hover:opacity-70">
+                    <Bot className="w-4 h-4 text-gray-500 dark:text-gray-400" onClick={() => { }} />
+                  </span>
+                </Tooltip>
               </div>
               {!isInMemoDetailPage && (workspaceMemoRelatedSetting.enableComment || commentAmount > 0) && (
                 <Link
