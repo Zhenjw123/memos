@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover
 import { Location } from "@/types/proto/api/v1/memo_service";
 import { useTranslate } from "@/utils/i18n";
 
+const amapKey = import.meta.env.VITE_GAODE_API_KEY;
+
 interface Props {
   location?: Location;
   onChange: (location?: Location) => void;
@@ -68,17 +70,48 @@ const LocationSelector = (props: Props) => {
     }
 
     // Fetch reverse geocoding data.
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${state.position.lat}&lon=${state.position.lng}&format=json`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data && data.display_name) {
-          setState({ ...state, placeholder: data.display_name });
-        }
-      })
-      .catch((error) => {
-        toast.error("Failed to fetch reverse geocoding data");
-        console.error("Failed to fetch reverse geocoding data:", error);
-      });
+    // 下面代码依次是：只使用OSM，使用高德+OSM但是先尝试OSM，只使用高德（*，目前）
+    //   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${state.position.lat}&lon=${state.position.lng}&format=json`)
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       if (data && data.display_name) {
+    //         setState({ ...state, placeholder: data.display_name });
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       toast.error("Failed to fetch reverse geocoding data");
+    //       console.error("Failed to fetch reverse geocoding data:", error);
+    //     });
+    // }, [state.position]);
+    // 先尝试 OpenStreetMap
+    // fetch(`https://nominatim.openstreetmap.org/reverse?lat=${state.position.lat}&lon=${state.position.lng}&format=json`)
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     if (data && data.display_name) {
+    //       setState({ ...state, placeholder: data.display_name });
+    //     } else {
+    //       throw new Error("No display_name in OSM response");
+    //     }
+    //   })
+    //   .catch(() => {
+      // 如果 OSM 失败，尝试高德
+      fetch(
+        `https://restapi.amap.com/v3/geocode/regeo?key=${amapKey}&location=${state.position.lng.toFixed(6)},${state.position.lat.toFixed(6)}&output=json`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("AMap response:", data);
+          if (data && data.regeocode) {
+            setState({ ...state, placeholder: data.regeocode.formatted_address });
+          } else {
+            toast.error("Failed to fetch reverse geocoding data from AMap");
+          }
+        })
+        .catch((error) => {
+          toast.error("Failed to fetch reverse geocoding data");
+          console.error("Failed to fetch reverse geocoding data:", error);
+        });
+    // });
   }, [state.position]);
 
   const onPositionChanged = (position: LatLng) => {
