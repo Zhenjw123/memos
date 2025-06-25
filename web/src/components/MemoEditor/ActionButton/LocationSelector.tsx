@@ -143,7 +143,8 @@ const LocationSelector = (props: Props) => {
           <div className="mt-2 w-full flex flex-row justify-between items-center gap-2">
             <div className="flex flex-row items-center justify-start gap-2">
               <Input
-                placeholder="Choose a position first."
+                style={{ width: "300px" }}
+                placeholder="请先选择一个位置"
                 value={state.placeholder}
                 size="sm"
                 startDecorator={
