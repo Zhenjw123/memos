@@ -37,6 +37,11 @@ export default defineConfig({
         target: devProxyServer,
         xfwd: true,
       },
+      "^/api/ai": {
+        target: "https://memo-ai-proxy.vercel.app",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ai/, "/api"),
+      },
     },
   },
   resolve: {

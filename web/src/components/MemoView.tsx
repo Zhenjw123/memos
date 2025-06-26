@@ -24,6 +24,7 @@ import showPreviewImageDialog from "./PreviewImageDialog";
 import ReactionSelector from "./ReactionSelector";
 import UserAvatar from "./UserAvatar";
 import VisibilityIcon from "./VisibilityIcon";
+import MemoAIChat from "./MemoAIChat";
 
 interface Props {
   memo: Memo;
@@ -45,6 +46,7 @@ const MemoView: React.FC<Props> = (props: Props) => {
   const user = useCurrentUser();
   const memoStore = useMemoStore();
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [showAIChat, setShowAIChat] = useState<boolean>(false);
   const [creator, setCreator] = useState(userStore.getUserByName(memo.creator));
   const [showNSFWContent, setShowNSFWContent] = useState(props.showNsfwContent);
   const memoContainerRef = useRef<HTMLDivElement>(null);
@@ -113,6 +115,10 @@ const MemoView: React.FC<Props> = (props: Props) => {
         ["pinned"],
       );
     }
+  };
+
+  const handleAIBotClick = () => {
+    setShowAIChat(true);
   };
 
   const displayTime = isArchived ? (
@@ -184,7 +190,7 @@ const MemoView: React.FC<Props> = (props: Props) => {
                 {currentUser && !isArchived && <ReactionSelector className="border-none w-auto h-auto" memo={memo} />}
                 <Tooltip title="AI 总结" placement="top">
                   <span className="cursor-pointer flex justify-center items-center hover:opacity-70">
-                    <Bot className="w-4 h-4 text-gray-500 dark:text-gray-400" onClick={() => { }} />
+                    <Bot className="w-4 h-4 text-gray-500 dark:text-gray-400" onClick={handleAIBotClick} />
                   </span>
                 </Tooltip>
               </div>
@@ -253,6 +259,14 @@ const MemoView: React.FC<Props> = (props: Props) => {
           )}
         </>
       )}
+
+      {/* AI 对话框 */}
+      <MemoAIChat
+        memo={memo}
+        open={showAIChat}
+        onOpenChange={setShowAIChat}
+        aiApiUrl="https://your-ai-proxy.vercel.app" // 可以根据需要修改或从配置中读取
+      />
     </div>
   );
 };
