@@ -26,7 +26,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
     memo,
     open,
     onOpenChange,
-    aiApiUrl = window.location.hostname === 'localhost' ? '/api/ai' : 'https://memo-ai-proxy.vercel.app'
+    aiApiUrl = 'https://memo-ai-proxy.vercel.app' // 替换为你的实际部署 URL
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -73,18 +73,6 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                 return;
             }
 
-            // 如果是本地开发环境，使用模拟数据
-            if (window.location.hostname === 'localhost') {
-                // 模拟网络延迟
-                await new Promise(resolve => setTimeout(resolve, 1500));
-
-                // 生成简单的总结
-                const words = memoContent.split(/\s+/).filter(Boolean);
-                const summary = `这篇笔记包含 ${words.length} 个词。主要内容围绕: ${words.slice(0, 10).join(' ')}${words.length > 10 ? '...' : ''}。这是一个模拟的AI总结，实际使用时会调用真实的AI服务。`;
-                setSummary(summary);
-                return;
-            }
-
             const response = await fetch(`${aiApiUrl}/api/summarize`, {
                 method: 'POST',
                 headers: {
@@ -126,43 +114,6 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
 
         try {
             const memoContent = extractMemoContent(memo);
-
-            // 如果是本地开发环境，使用模拟响应
-            if (window.location.hostname === 'localhost') {
-                // 模拟网络延迟
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const assistantMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant',
-                    content: '',
-                    timestamp: new Date(),
-                };
-
-                setMessages(prev => [...prev, assistantMessage]);
-
-                // 模拟流式响应
-                const responses = [
-                    "这是一个很好的问题！",
-                    "根据您的笔记内容，",
-                    "我认为主要重点在于...",
-                    "您是否还想了解更多关于这个话题的信息？",
-                    "\n\n（这是模拟的AI响应，实际使用时会调用真实的AI服务）"
-                ];
-
-                for (const response of responses) {
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    setMessages(prev =>
-                        prev.map(msg =>
-                            msg.id === assistantMessage.id
-                                ? { ...msg, content: msg.content + response }
-                                : msg
-                        )
-                    );
-                }
-                return;
-            }
-
             const messagesForAPI = messages.concat(userMessage).map(msg => ({
                 role: msg.role,
                 content: msg.content,
