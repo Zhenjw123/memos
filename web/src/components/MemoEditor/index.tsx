@@ -64,7 +64,7 @@ const MemoEditor = observer((props: Props) => {
   const resourceStore = useResourceStore();
   const currentUser = useCurrentUser();
   const [state, setState] = useState<State>({
-    memoVisibility: Visibility.PRIVATE,
+    memoVisibility: Visibility.PUBLIC,
     resourceList: [],
     relationList: [],
     location: undefined,
@@ -99,7 +99,7 @@ const MemoEditor = observer((props: Props) => {
   useEffect(() => {
     let visibility = userSetting.memoVisibility;
     if (workspaceMemoRelatedSetting.disallowPublicVisibility && visibility === "PUBLIC") {
-      visibility = "PRIVATE";
+      visibility = "PUBLIC";
     }
     setState((prevState) => ({
       ...prevState,
