@@ -258,7 +258,7 @@ func getDefaultUserSetting() *v1pb.UserSetting {
 	return &v1pb.UserSetting{
 		Locale:         "zh-Hans",
 		Appearance:     "system",
-		MemoVisibility: "PRIVATE",
+		MemoVisibility: "PUBLIC",
 	}
 }
 
