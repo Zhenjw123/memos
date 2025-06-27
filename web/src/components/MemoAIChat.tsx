@@ -34,7 +34,24 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
     const [summary, setSummary] = useState<string>('');
     const [isLoadingSummary, setIsLoadingSummary] = useState(false);
     const [error, setError] = useState<string>('');
+    const [scrollProgress, setScrollProgress] = useState(0);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    // 计算滚动进度
+    const updateScrollProgress = () => {
+        if (scrollAreaRef.current) {
+            const element = scrollAreaRef.current;
+            const scrollTop = element.scrollTop;
+            const scrollHeight = element.scrollHeight;
+            const clientHeight = element.clientHeight;
+            
+            // 计算滚动进度百分比
+            const totalScrollable = scrollHeight - clientHeight;
+            const progress = totalScrollable > 0 ? (scrollTop / totalScrollable) * 100 : 0;
+            
+            setScrollProgress(Math.min(100, Math.max(0, progress)));
+        }
+    };
 
     // 提取 memo 的文本内容
     const extractMemoContent = (memo: Memo): string => {
@@ -197,12 +214,36 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
         }
     }, [open]);
 
-    // 自动滚动到底部
+    // 自动滚动到底部并更新进度
     useEffect(() => {
         if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+            const element = scrollAreaRef.current;
+            element.scrollTop = element.scrollHeight;
+            // 使用 setTimeout 确保 DOM 更新后再计算进度
+            setTimeout(() => {
+                updateScrollProgress();
+            }, 100);
         }
     }, [messages]);
+
+    // 添加滚动事件监听器
+    useEffect(() => {
+        const scrollElement = scrollAreaRef.current;
+        if (scrollElement) {
+            const handleScroll = () => {
+                updateScrollProgress();
+            };
+            
+            scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+            
+            // 初始化进度
+            setTimeout(() => {
+                updateScrollProgress();
+            }, 100);
+            
+            return () => scrollElement.removeEventListener('scroll', handleScroll);
+        }
+    }, [open]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -211,18 +252,18 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl h-[700px] p-0">
-                <DialogHeader className="p-6 pb-0">
+            <DialogContent className="max-w-2xl max-h-[80vh] h-[700px] p-0 flex flex-col">
+                <DialogHeader className="p-6 pb-0 flex-shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                         <Bot className="w-5 h-5" />
                         AI 笔记助手
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="flex-1 flex flex-col h-full p-6 pt-0">
+                <div className="flex-1 flex flex-col p-6 pt-0 min-h-0">
                     {/* 总结区域 */}
                     {(summary || isLoadingSummary) && (
-                        <Card className="mb-4">
+                        <Card className="mb-4 flex-shrink-0">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-medium">笔记总结</CardTitle>
                             </CardHeader>
@@ -241,59 +282,84 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
 
                     {/* 错误提示 */}
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700 flex-shrink-0">
                             <AlertCircle className="w-4 h-4" />
                             {error}
                         </div>
                     )}
 
-                    {/* 消息列表 */}
-                    <ScrollArea className="flex-1 mb-4" ref={scrollAreaRef}>
-                        <div className="space-y-4">
-                            {messages.map((message) => (
-                                <div
-                                    key={message.id}
-                                    className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'
-                                        }`}
-                                >
-                                    {message.role === 'assistant' && (
+                    {/* 消息列表容器 - 关键：这里需要能够伸缩 */}
+                    <div className="flex-1 mb-4 relative min-h-0">
+                        {/* 自定义滚动进度条 */}
+                        <div className="absolute right-0 top-0 w-1 h-full bg-gray-200 rounded-full z-10 opacity-60">
+                            <div 
+                                className="w-full bg-blue-500 rounded-full transition-all duration-200 ease-out"
+                                style={{ 
+                                    height: `${Math.max(5, scrollProgress)}%`,
+                                }}
+                            />
+                        </div>
+                        
+                        {/* 消息滚动区域 */}
+                        <div 
+                            ref={scrollAreaRef}
+                            className="h-full overflow-y-auto pr-3"
+                            style={{
+                                scrollbarWidth: 'none',
+                                msOverflowStyle: 'none',
+                            }}
+                        >
+                            <div className="space-y-4">
+                                {messages.length === 0 && (
+                                    <div className="flex items-center justify-center h-32 text-gray-500 text-sm">
+                                        开始与 AI 对话，了解更多关于这篇笔记的内容
+                                    </div>
+                                )}
+                                {messages.map((message) => (
+                                    <div
+                                        key={message.id}
+                                        className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                                            }`}
+                                    >
+                                        {message.role === 'assistant' && (
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                                <Bot className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                        )}
+                                        <div
+                                            className={`max-w-[80%] p-3 rounded-lg ${message.role === 'user'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 text-gray-900'
+                                                }`}
+                                        >
+                                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                                        </div>
+                                        {message.role === 'user' && (
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                                <User className="w-4 h-4 text-gray-600" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {isLoading && (
+                                    <div className="flex items-start gap-3 justify-start">
                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                                             <Bot className="w-4 h-4 text-blue-600" />
                                         </div>
-                                    )}
-                                    <div
-                                        className={`max-w-[80%] p-3 rounded-lg ${message.role === 'user'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 text-gray-900'
-                                            }`}
-                                    >
-                                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                    </div>
-                                    {message.role === 'user' && (
-                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                            <User className="w-4 h-4 text-gray-600" />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex items-start gap-3 justify-start">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                        <Bot className="w-4 h-4 text-blue-600" />
-                                    </div>
-                                    <div className="bg-gray-100 p-3 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            <span className="text-sm text-gray-600">正在思考...</span>
+                                        <div className="bg-gray-100 p-3 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span className="text-sm text-gray-600">正在生成回复...</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </ScrollArea>
+                    </div>
 
                     {/* 输入区域 */}
-                    <form onSubmit={handleSubmit} className="flex gap-2">
+                    <form onSubmit={handleSubmit} className="flex gap-2 flex-shrink-0">
                         <Input
                             value={input}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
@@ -306,6 +372,18 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                         </Button>
                     </form>
                 </div>
+
+                {/* 全局样式 */}
+                <style jsx global>{`
+                    .scrollbar-hide::-webkit-scrollbar {
+                        display: none;
+                    }
+                    
+                    /* 隐藏滚动区域的 webkit 滚动条 */
+                    div[style*="overflow-y: auto"]::-webkit-scrollbar {
+                        display: none;
+                    }
+                `}</style>
             </DialogContent>
         </Dialog>
     );
