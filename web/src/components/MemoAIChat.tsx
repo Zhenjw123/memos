@@ -7,6 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, User, Send, Loader2, AlertCircle } from 'lucide-react';
 import { Memo } from '@/types/proto/api/v1/memo_service';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
 
 interface Message {
     id: string;
@@ -19,14 +23,14 @@ interface MemoAIChatProps {
     memo: Memo;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    aiApiUrl?: string; // AI 代理服务的 URL
+    aiApiUrl?: string;
 }
 
 const MemoAIChat: React.FC<MemoAIChatProps> = ({
     memo,
     open,
     onOpenChange,
-    aiApiUrl = 'https://memo-ai-proxy.vercel.app' // 替换为你的实际部署 URL
+    aiApiUrl = 'https://memo-ai-proxy.vercel.app'
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -34,38 +38,17 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
     const [summary, setSummary] = useState<string>('');
     const [isLoadingSummary, setIsLoadingSummary] = useState(false);
     const [error, setError] = useState<string>('');
-    const [scrollProgress, setScrollProgress] = useState(0);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-    // 计算滚动进度
-    const updateScrollProgress = () => {
-        if (scrollAreaRef.current) {
-            const element = scrollAreaRef.current;
-            const scrollTop = element.scrollTop;
-            const scrollHeight = element.scrollHeight;
-            const clientHeight = element.clientHeight;
-            
-            // 计算滚动进度百分比
-            const totalScrollable = scrollHeight - clientHeight;
-            const progress = totalScrollable > 0 ? (scrollTop / totalScrollable) * 100 : 0;
-            
-            setScrollProgress(Math.min(100, Math.max(0, progress)));
-        }
-    };
 
     // 提取 memo 的文本内容
     const extractMemoContent = (memo: Memo): string => {
-        // 根据你的 memo 结构提取内容，这里假设有 content 字段
-        // 你可能需要根据实际的 memo 数据结构调整这个函数
         if (memo.content) {
             return memo.content;
         }
 
-        // 如果使用 nodes 结构，需要遍历提取文本
         if (memo.nodes && memo.nodes.length > 0) {
             return memo.nodes
                 .map(node => {
-                    // 根据 node 类型提取文本，这里需要根据你的实际结构调整
                     if (node.type === 'TEXT' && node.textNode) {
                         return node.textNode.content;
                     }
@@ -143,7 +126,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                 },
                 body: JSON.stringify({
                     messages: messagesForAPI,
-                    memoContent: messages.length === 0 ? memoContent : undefined, // 只在第一次发送memo内容
+                    memoContent: messages.length === 0 ? memoContent : undefined,
                 }),
             });
 
@@ -178,7 +161,6 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                 for (const line of lines) {
                     if (line.startsWith('0:')) {
                         try {
-                            // 处理格式：0:"content"
                             const content = line.slice(2);
                             const parsed = JSON.parse(content);
                             if (parsed) {
@@ -191,7 +173,6 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                 );
                             }
                         } catch (e) {
-                            // 忽略解析错误，继续处理下一行
                             console.debug('Parse error for line:', line, e);
                         }
                     }
@@ -200,7 +181,6 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
         } catch (error) {
             console.error('Error sending message:', error);
             setError('发送消息时出错，请稍后重试');
-            // 移除失败的用户消息
             setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
         } finally {
             setIsLoading(false);
@@ -214,36 +194,13 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
         }
     }, [open]);
 
-    // 自动滚动到底部并更新进度
+    // 自动滚动到底部
     useEffect(() => {
         if (scrollAreaRef.current) {
             const element = scrollAreaRef.current;
             element.scrollTop = element.scrollHeight;
-            // 使用 setTimeout 确保 DOM 更新后再计算进度
-            setTimeout(() => {
-                updateScrollProgress();
-            }, 100);
         }
     }, [messages]);
-
-    // 添加滚动事件监听器
-    useEffect(() => {
-        const scrollElement = scrollAreaRef.current;
-        if (scrollElement) {
-            const handleScroll = () => {
-                updateScrollProgress();
-            };
-            
-            scrollElement.addEventListener('scroll', handleScroll, { passive: true });
-            
-            // 初始化进度
-            setTimeout(() => {
-                updateScrollProgress();
-            }, 100);
-            
-            return () => scrollElement.removeEventListener('scroll', handleScroll);
-        }
-    }, [open]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -261,7 +218,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                 </DialogHeader>
 
                 <div className="flex-1 flex flex-col p-6 pt-0 min-h-0">
-                    {/* 总结区域 */}
+                    {/* 总结区域 - 限制高度并添加滚动条 */}
                     {(summary || isLoadingSummary) && (
                         <Card className="mb-4 flex-shrink-0">
                             <CardHeader className="pb-2">
@@ -274,7 +231,36 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                         正在生成总结...
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">{summary}</p>
+                                    <div 
+                                        className="text-sm text-muted-foreground max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+                                        style={{
+                                            scrollbarWidth: 'thin',
+                                            scrollbarColor: '#9ca3af #e5e7eb'
+                                        }}
+                                    >
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            rehypePlugins={[rehypeHighlight]}
+                                            components={{
+                                                // 自定义样式
+                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                code: ({ inline, children }) => 
+                                                    inline ? (
+                                                        <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{children}</code>
+                                                    ) : (
+                                                        <code className="block bg-gray-100 p-2 rounded text-xs overflow-x-auto">{children}</code>
+                                                    ),
+                                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                                                li: ({ children }) => <li className="mb-1">{children}</li>,
+                                                h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                                                h2: ({ children }) => <h2 className="text-md font-bold mb-2">{children}</h2>,
+                                                h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
+                                            }}
+                                        >
+                                            {summary}
+                                        </ReactMarkdown>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
@@ -288,25 +274,15 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                         </div>
                     )}
 
-                    {/* 消息列表容器 - 关键：这里需要能够伸缩 */}
+                    {/* 消息列表容器 */}
                     <div className="flex-1 mb-4 relative min-h-0">
-                        {/* 自定义滚动进度条 */}
-                        <div className="absolute right-0 top-0 w-1 h-full bg-gray-200 rounded-full z-10 opacity-60">
-                            <div 
-                                className="w-full bg-blue-500 rounded-full transition-all duration-200 ease-out"
-                                style={{ 
-                                    height: `${Math.max(5, scrollProgress)}%`,
-                                }}
-                            />
-                        </div>
-                        
-                        {/* 消息滚动区域 */}
+                        {/* 消息滚动区域 - 使用灰色滚动条 */}
                         <div 
                             ref={scrollAreaRef}
-                            className="h-full overflow-y-auto pr-3"
+                            className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 pr-2"
                             style={{
-                                scrollbarWidth: 'none',
-                                msOverflowStyle: 'none',
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: '#9ca3af #e5e7eb'
                             }}
                         >
                             <div className="space-y-4">
@@ -332,7 +308,58 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                                 : 'bg-gray-100 text-gray-900'
                                                 }`}
                                         >
-                                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                                            {message.role === 'user' ? (
+                                                <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                                            ) : (
+                                                <div className="text-sm">
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        rehypePlugins={[rehypeHighlight]}
+                                                        components={{
+                                                            // 针对 AI 消息的样式
+                                                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                            code: ({ inline, children }) => 
+                                                                inline ? (
+                                                                    <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">{children}</code>
+                                                                ) : (
+                                                                    <pre className="bg-gray-800 text-gray-100 p-3 rounded mt-2 mb-2 overflow-x-auto">
+                                                                        <code className="text-xs font-mono">{children}</code>
+                                                                    </pre>
+                                                                ),
+                                                            ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                                                            ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
+                                                            li: ({ children }) => <li>{children}</li>,
+                                                            h1: ({ children }) => <h1 className="text-base font-bold mb-2 mt-3 first:mt-0">{children}</h1>,
+                                                            h2: ({ children }) => <h2 className="text-sm font-bold mb-2 mt-3 first:mt-0">{children}</h2>,
+                                                            h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">{children}</h3>,
+                                                            blockquote: ({ children }) => (
+                                                                <blockquote className="border-l-4 border-gray-300 pl-3 italic my-2 text-gray-700">
+                                                                    {children}
+                                                                </blockquote>
+                                                            ),
+                                                            table: ({ children }) => (
+                                                                <div className="overflow-x-auto my-2">
+                                                                    <table className="min-w-full border-collapse border border-gray-300 text-xs">
+                                                                        {children}
+                                                                    </table>
+                                                                </div>
+                                                            ),
+                                                            th: ({ children }) => (
+                                                                <th className="border border-gray-300 px-2 py-1 bg-gray-50 font-semibold text-left">
+                                                                    {children}
+                                                                </th>
+                                                            ),
+                                                            td: ({ children }) => (
+                                                                <td className="border border-gray-300 px-2 py-1">
+                                                                    {children}
+                                                                </td>
+                                                            ),
+                                                        }}
+                                                    >
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            )}
                                         </div>
                                         {message.role === 'user' && (
                                             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
@@ -373,15 +400,30 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                     </form>
                 </div>
 
-                {/* 全局样式 */}
+                {/* 全局样式 - 自定义滚动条 */}
                 <style jsx global>{`
-                    .scrollbar-hide::-webkit-scrollbar {
-                        display: none;
+                    /* Webkit 滚动条样式 */
+                    .scrollbar-thin::-webkit-scrollbar {
+                        width: 8px;
+                        height: 8px;
                     }
                     
-                    /* 隐藏滚动区域的 webkit 滚动条 */
-                    div[style*="overflow-y: auto"]::-webkit-scrollbar {
-                        display: none;
+                    .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+                        background-color: #9ca3af;
+                        border-radius: 4px;
+                    }
+                    
+                    .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb:hover {
+                        background-color: #6b7280;
+                    }
+                    
+                    .scrollbar-track-gray-200::-webkit-scrollbar-track {
+                        background-color: #e5e7eb;
+                        border-radius: 4px;
+                    }
+                    
+                    .scrollbar-thin::-webkit-scrollbar-corner {
+                        background-color: #e5e7eb;
                     }
                 `}</style>
             </DialogContent>
