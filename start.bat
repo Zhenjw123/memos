@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 echo 正在启动后端服务...
 @REM sqlite
 @REM start cmd /k "cd /d %~dp0\bin\memos && go run main.go --mode dev --port 8081  --driver sqlite --dsn memos.db"
