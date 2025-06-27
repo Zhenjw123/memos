@@ -39,6 +39,7 @@ message Activity {
 
 message ActivityPayload {
   ActivityMemoCommentPayload memo_comment = 1;
+  ActivityMemoReactionPayload memo_reaction = 2;
 }
 
 // ActivityMemoCommentPayload represents the payload of a memo comment activity.
@@ -48,6 +49,15 @@ message ActivityMemoCommentPayload {
   string memo = 1;
   // The name of related memo.
   string related_memo = 2;
+}
+
+// ActivityMemoReactionPayload represents the payload of a memo reaction activity.
+message ActivityMemoReactionPayload {
+  // The memo name that received the reaction.
+  // Refer to `Memo.name`.
+  string memo = 1;
+  // The type of reaction.
+  string reaction_type = 2;
 }
 
 message GetActivityRequest {

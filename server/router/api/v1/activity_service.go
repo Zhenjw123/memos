@@ -70,5 +70,18 @@ func (s *APIV1Service) convertActivityPayloadFromStore(ctx context.Context, payl
 			RelatedMemo: fmt.Sprintf("%s%s", MemoNamePrefix, relatedMemo.UID),
 		}
 	}
+	if payload.MemoReaction != nil {
+		memo, err := s.Store.GetMemo(ctx, &store.FindMemo{
+			ID:             &payload.MemoReaction.MemoId,
+			ExcludeContent: true,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get memo: %v", err)
+		}
+		v2Payload.MemoReaction = &v1pb.ActivityMemoReactionPayload{
+			Memo:         fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID),
+			ReactionType: payload.MemoReaction.ReactionType,
+		}
+	}
 	return v2Payload, nil
 }

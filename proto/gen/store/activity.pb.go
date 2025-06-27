@@ -73,16 +73,69 @@ func (x *ActivityMemoCommentPayload) GetRelatedMemoId() int32 {
 	return 0
 }
 
+type ActivityMemoReactionPayload struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemoId        int32                  `protobuf:"varint,1,opt,name=memo_id,json=memoId,proto3" json:"memo_id,omitempty"`
+	ReactionType  string                 `protobuf:"bytes,2,opt,name=reaction_type,json=reactionType,proto3" json:"reaction_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivityMemoReactionPayload) Reset() {
+	*x = ActivityMemoReactionPayload{}
+	mi := &file_store_activity_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivityMemoReactionPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivityMemoReactionPayload) ProtoMessage() {}
+
+func (x *ActivityMemoReactionPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_store_activity_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivityMemoReactionPayload.ProtoReflect.Descriptor instead.
+func (*ActivityMemoReactionPayload) Descriptor() ([]byte, []int) {
+	return file_store_activity_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ActivityMemoReactionPayload) GetMemoId() int32 {
+	if x != nil {
+		return x.MemoId
+	}
+	return 0
+}
+
+func (x *ActivityMemoReactionPayload) GetReactionType() string {
+	if x != nil {
+		return x.ReactionType
+	}
+	return ""
+}
+
 type ActivityPayload struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	MemoComment   *ActivityMemoCommentPayload `protobuf:"bytes,1,opt,name=memo_comment,json=memoComment,proto3" json:"memo_comment,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	MemoComment   *ActivityMemoCommentPayload  `protobuf:"bytes,1,opt,name=memo_comment,json=memoComment,proto3" json:"memo_comment,omitempty"`
+	MemoReaction  *ActivityMemoReactionPayload `protobuf:"bytes,2,opt,name=memo_reaction,json=memoReaction,proto3" json:"memo_reaction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActivityPayload) Reset() {
 	*x = ActivityPayload{}
-	mi := &file_store_activity_proto_msgTypes[1]
+	mi := &file_store_activity_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +147,7 @@ func (x *ActivityPayload) String() string {
 func (*ActivityPayload) ProtoMessage() {}
 
 func (x *ActivityPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_store_activity_proto_msgTypes[1]
+	mi := &file_store_activity_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,12 +160,19 @@ func (x *ActivityPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivityPayload.ProtoReflect.Descriptor instead.
 func (*ActivityPayload) Descriptor() ([]byte, []int) {
-	return file_store_activity_proto_rawDescGZIP(), []int{1}
+	return file_store_activity_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ActivityPayload) GetMemoComment() *ActivityMemoCommentPayload {
 	if x != nil {
 		return x.MemoComment
+	}
+	return nil
+}
+
+func (x *ActivityPayload) GetMemoReaction() *ActivityMemoReactionPayload {
+	if x != nil {
+		return x.MemoReaction
 	}
 	return nil
 }
@@ -124,9 +184,13 @@ const file_store_activity_proto_rawDesc = "" +
 	"\x14store/activity.proto\x12\vmemos.store\"]\n" +
 	"\x1aActivityMemoCommentPayload\x12\x17\n" +
 	"\amemo_id\x18\x01 \x01(\x05R\x06memoId\x12&\n" +
-	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\"]\n" +
+	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\"[\n" +
+	"\x1bActivityMemoReactionPayload\x12\x17\n" +
+	"\amemo_id\x18\x01 \x01(\x05R\x06memoId\x12#\n" +
+	"\rreaction_type\x18\x02 \x01(\tR\freactionType\"\xac\x01\n" +
 	"\x0fActivityPayload\x12J\n" +
-	"\fmemo_comment\x18\x01 \x01(\v2'.memos.store.ActivityMemoCommentPayloadR\vmemoCommentB\x98\x01\n" +
+	"\fmemo_comment\x18\x01 \x01(\v2'.memos.store.ActivityMemoCommentPayloadR\vmemoComment\x12M\n" +
+	"\rmemo_reaction\x18\x02 \x01(\v2(.memos.store.ActivityMemoReactionPayloadR\fmemoReactionB\x98\x01\n" +
 	"\x0fcom.memos.storeB\rActivityProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
@@ -141,18 +205,20 @@ func file_store_activity_proto_rawDescGZIP() []byte {
 	return file_store_activity_proto_rawDescData
 }
 
-var file_store_activity_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_store_activity_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_store_activity_proto_goTypes = []any{
-	(*ActivityMemoCommentPayload)(nil), // 0: memos.store.ActivityMemoCommentPayload
-	(*ActivityPayload)(nil),            // 1: memos.store.ActivityPayload
+	(*ActivityMemoCommentPayload)(nil),  // 0: memos.store.ActivityMemoCommentPayload
+	(*ActivityMemoReactionPayload)(nil), // 1: memos.store.ActivityMemoReactionPayload
+	(*ActivityPayload)(nil),             // 2: memos.store.ActivityPayload
 }
 var file_store_activity_proto_depIdxs = []int32{
 	0, // 0: memos.store.ActivityPayload.memo_comment:type_name -> memos.store.ActivityMemoCommentPayload
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 1: memos.store.ActivityPayload.memo_reaction:type_name -> memos.store.ActivityMemoReactionPayload
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_store_activity_proto_init() }
@@ -166,7 +232,7 @@ func file_store_activity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_store_activity_proto_rawDesc), len(file_store_activity_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

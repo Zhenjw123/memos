@@ -116,8 +116,9 @@ func (x *Activity) GetPayload() *ActivityPayload {
 }
 
 type ActivityPayload struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	MemoComment   *ActivityMemoCommentPayload `protobuf:"bytes,1,opt,name=memo_comment,json=memoComment,proto3" json:"memo_comment,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	MemoComment   *ActivityMemoCommentPayload  `protobuf:"bytes,1,opt,name=memo_comment,json=memoComment,proto3" json:"memo_comment,omitempty"`
+	MemoReaction  *ActivityMemoReactionPayload `protobuf:"bytes,2,opt,name=memo_reaction,json=memoReaction,proto3" json:"memo_reaction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,6 +156,13 @@ func (*ActivityPayload) Descriptor() ([]byte, []int) {
 func (x *ActivityPayload) GetMemoComment() *ActivityMemoCommentPayload {
 	if x != nil {
 		return x.MemoComment
+	}
+	return nil
+}
+
+func (x *ActivityPayload) GetMemoReaction() *ActivityMemoReactionPayload {
+	if x != nil {
+		return x.MemoReaction
 	}
 	return nil
 }
@@ -215,6 +223,62 @@ func (x *ActivityMemoCommentPayload) GetRelatedMemo() string {
 	return ""
 }
 
+// ActivityMemoReactionPayload represents the payload of a memo reaction activity.
+type ActivityMemoReactionPayload struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The memo name that received the reaction.
+	// Refer to `Memo.name`.
+	Memo string `protobuf:"bytes,1,opt,name=memo,proto3" json:"memo,omitempty"`
+	// The type of reaction.
+	ReactionType  string `protobuf:"bytes,2,opt,name=reaction_type,json=reactionType,proto3" json:"reaction_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivityMemoReactionPayload) Reset() {
+	*x = ActivityMemoReactionPayload{}
+	mi := &file_api_v1_activity_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivityMemoReactionPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivityMemoReactionPayload) ProtoMessage() {}
+
+func (x *ActivityMemoReactionPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_activity_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivityMemoReactionPayload.ProtoReflect.Descriptor instead.
+func (*ActivityMemoReactionPayload) Descriptor() ([]byte, []int) {
+	return file_api_v1_activity_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ActivityMemoReactionPayload) GetMemo() string {
+	if x != nil {
+		return x.Memo
+	}
+	return ""
+}
+
+func (x *ActivityMemoReactionPayload) GetReactionType() string {
+	if x != nil {
+		return x.ReactionType
+	}
+	return ""
+}
+
 type GetActivityRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The name of the activity.
@@ -226,7 +290,7 @@ type GetActivityRequest struct {
 
 func (x *GetActivityRequest) Reset() {
 	*x = GetActivityRequest{}
-	mi := &file_api_v1_activity_service_proto_msgTypes[3]
+	mi := &file_api_v1_activity_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +302,7 @@ func (x *GetActivityRequest) String() string {
 func (*GetActivityRequest) ProtoMessage() {}
 
 func (x *GetActivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_activity_service_proto_msgTypes[3]
+	mi := &file_api_v1_activity_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,7 +315,7 @@ func (x *GetActivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActivityRequest.ProtoReflect.Descriptor instead.
 func (*GetActivityRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_activity_service_proto_rawDescGZIP(), []int{3}
+	return file_api_v1_activity_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetActivityRequest) GetName() string {
@@ -273,12 +337,16 @@ const file_api_v1_activity_service_proto_rawDesc = "" +
 	"\x05level\x18\x04 \x01(\tR\x05level\x12A\n" +
 	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x04\xe2A\x01\x03R\n" +
 	"createTime\x127\n" +
-	"\apayload\x18\x06 \x01(\v2\x1d.memos.api.v1.ActivityPayloadR\apayload\"^\n" +
+	"\apayload\x18\x06 \x01(\v2\x1d.memos.api.v1.ActivityPayloadR\apayload\"\xae\x01\n" +
 	"\x0fActivityPayload\x12K\n" +
-	"\fmemo_comment\x18\x01 \x01(\v2(.memos.api.v1.ActivityMemoCommentPayloadR\vmemoComment\"S\n" +
+	"\fmemo_comment\x18\x01 \x01(\v2(.memos.api.v1.ActivityMemoCommentPayloadR\vmemoComment\x12N\n" +
+	"\rmemo_reaction\x18\x02 \x01(\v2).memos.api.v1.ActivityMemoReactionPayloadR\fmemoReaction\"S\n" +
 	"\x1aActivityMemoCommentPayload\x12\x12\n" +
 	"\x04memo\x18\x01 \x01(\tR\x04memo\x12!\n" +
-	"\frelated_memo\x18\x02 \x01(\tR\vrelatedMemo\"(\n" +
+	"\frelated_memo\x18\x02 \x01(\tR\vrelatedMemo\"V\n" +
+	"\x1bActivityMemoReactionPayload\x12\x12\n" +
+	"\x04memo\x18\x01 \x01(\tR\x04memo\x12#\n" +
+	"\rreaction_type\x18\x02 \x01(\tR\freactionType\"(\n" +
 	"\x12GetActivityRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name2\x86\x01\n" +
 	"\x0fActivityService\x12s\n" +
@@ -297,25 +365,27 @@ func file_api_v1_activity_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_activity_service_proto_rawDescData
 }
 
-var file_api_v1_activity_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_v1_activity_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_api_v1_activity_service_proto_goTypes = []any{
-	(*Activity)(nil),                   // 0: memos.api.v1.Activity
-	(*ActivityPayload)(nil),            // 1: memos.api.v1.ActivityPayload
-	(*ActivityMemoCommentPayload)(nil), // 2: memos.api.v1.ActivityMemoCommentPayload
-	(*GetActivityRequest)(nil),         // 3: memos.api.v1.GetActivityRequest
-	(*timestamppb.Timestamp)(nil),      // 4: google.protobuf.Timestamp
+	(*Activity)(nil),                    // 0: memos.api.v1.Activity
+	(*ActivityPayload)(nil),             // 1: memos.api.v1.ActivityPayload
+	(*ActivityMemoCommentPayload)(nil),  // 2: memos.api.v1.ActivityMemoCommentPayload
+	(*ActivityMemoReactionPayload)(nil), // 3: memos.api.v1.ActivityMemoReactionPayload
+	(*GetActivityRequest)(nil),          // 4: memos.api.v1.GetActivityRequest
+	(*timestamppb.Timestamp)(nil),       // 5: google.protobuf.Timestamp
 }
 var file_api_v1_activity_service_proto_depIdxs = []int32{
-	4, // 0: memos.api.v1.Activity.create_time:type_name -> google.protobuf.Timestamp
+	5, // 0: memos.api.v1.Activity.create_time:type_name -> google.protobuf.Timestamp
 	1, // 1: memos.api.v1.Activity.payload:type_name -> memos.api.v1.ActivityPayload
 	2, // 2: memos.api.v1.ActivityPayload.memo_comment:type_name -> memos.api.v1.ActivityMemoCommentPayload
-	3, // 3: memos.api.v1.ActivityService.GetActivity:input_type -> memos.api.v1.GetActivityRequest
-	0, // 4: memos.api.v1.ActivityService.GetActivity:output_type -> memos.api.v1.Activity
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 3: memos.api.v1.ActivityPayload.memo_reaction:type_name -> memos.api.v1.ActivityMemoReactionPayload
+	4, // 4: memos.api.v1.ActivityService.GetActivity:input_type -> memos.api.v1.GetActivityRequest
+	0, // 5: memos.api.v1.ActivityService.GetActivity:output_type -> memos.api.v1.Activity
+	5, // [5:6] is the sub-list for method output_type
+	4, // [4:5] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_activity_service_proto_init() }
@@ -329,7 +399,7 @@ func file_api_v1_activity_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_activity_service_proto_rawDesc), len(file_api_v1_activity_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

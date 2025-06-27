@@ -133,8 +133,15 @@
     "code": "Code",
     "comment": {
       "self": "Comments",
-      "write-a-comment": "Write a comment"
+      "write-a-comment": "Write a comment",
+      "comment-inbox":"commented on your DeepNote",
+      "original-note":"original DeepNote",
+      "comment-content":"Comment Content"
     },
+    "react": {
+      "reacted-with": "reacted with",
+      "to-your-note": "to your DeepNote"
+    }, 
     "copy-link": "Copy Link",
     "count-memos-in-date": "{{count}} {{memos}} in {{date}}",
     "delete-confirm": "Are you sure you want to delete this memo? THIS ACTION IS IRREVERSIBLE",

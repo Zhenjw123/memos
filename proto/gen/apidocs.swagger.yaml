@@ -2027,11 +2027,23 @@ definitions:
         type: string
         description: The name of related memo.
     description: ActivityMemoCommentPayload represents the payload of a memo comment activity.
+  apiv1ActivityMemoReactionPayload:
+    type: object
+    properties:
+      memo:
+        type: string
+        description: "The memo name that received the reaction.\r\nRefer to `Memo.name`."
+      reactionType:
+        type: string
+        description: The type of reaction.
+    description: ActivityMemoReactionPayload represents the payload of a memo reaction activity.
   apiv1ActivityPayload:
     type: object
     properties:
       memoComment:
         $ref: '#/definitions/apiv1ActivityMemoCommentPayload'
+      memoReaction:
+        $ref: '#/definitions/apiv1ActivityMemoReactionPayload'
   apiv1FieldMapping:
     type: object
     properties:
@@ -2610,6 +2622,7 @@ definitions:
       - TYPE_UNSPECIFIED
       - MEMO_COMMENT
       - VERSION_UPDATE
+      - MEMO_REACTION
     default: TYPE_UNSPECIFIED
   v1ItalicNode:
     type: object

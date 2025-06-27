@@ -52,6 +52,7 @@ message Inbox {
     TYPE_UNSPECIFIED = 0;
     MEMO_COMMENT = 1;
     VERSION_UPDATE = 2;
+    MEMO_REACTION = 3;
   }
   Type type = 6;
 

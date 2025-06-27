@@ -130,8 +130,15 @@
     "code": "代码",
     "comment": {
       "self": "评论",
-      "write-a-comment": "写评论"
+      "write-a-comment": "写评论",
+      "comment-inbox":"评论了你的DeepNote",
+      "original-note":"原笔记",
+      "comment-content":"评论内容"
     },
+    "react": {
+      "reacted-with": "点了",
+      "to-your-note": "给你的DeepNote"
+    }, 
     "copy-link": "复制链接",
     "count-memos-in-date": "{{date}} 有 {{count}} 条备忘录",
     "delete-confirm": "您确定要删除此条备忘录吗？（此操作不可逆）",
@@ -170,6 +177,7 @@
     "no-data": "未找到任何数据。",
     "password-changed": "密码已修改",
     "password-not-match": "密码不一致。",
+    "reacted-to-your-memo": "对你的笔记做出了表态",
     "remove-completed-task-list-items-successfully": "移除成功！",
     "restored-successfully": "恢复成功",
     "succeed-copy-link": "复制链接到剪贴板成功。",

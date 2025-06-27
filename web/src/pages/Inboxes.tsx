@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 import Empty from "@/components/Empty";
 import MemoCommentMessage from "@/components/Inbox/MemoCommentMessage";
+import MemoReactionMessage from "@/components/Inbox/MemoReactionMessage";
 import MobileHeader from "@/components/MobileHeader";
 import useResponsiveWidth from "@/hooks/useResponsiveWidth";
 import { userStore } from "@/store/v2";
@@ -46,6 +47,9 @@ const Inboxes = observer(() => {
                 if (inbox.type === Inbox_Type.MEMO_COMMENT) {
                   return <MemoCommentMessage key={`${inbox.name}-${inbox.status}`} inbox={inbox} />;
                 }
+                else if (inbox.type === Inbox_Type.MEMO_REACTION) {
+                  return <MemoReactionMessage key={`${inbox.name}-${inbox.status}`} inbox={inbox} />;
+                }else
                 return undefined;
               })}
             </div>

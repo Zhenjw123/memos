@@ -9,6 +9,12 @@ message ActivityMemoCommentPayload {
   int32 related_memo_id = 2;
 }
 
+message ActivityMemoReactionPayload {
+  int32 memo_id = 1;
+  string reaction_type = 2;
+}
+
 message ActivityPayload {
   ActivityMemoCommentPayload memo_comment = 1;
+  ActivityMemoReactionPayload memo_reaction = 2;
 }
