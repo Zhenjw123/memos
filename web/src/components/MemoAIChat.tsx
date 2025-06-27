@@ -30,7 +30,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
     memo,
     open,
     onOpenChange,
-    aiApiUrl = 'https://memo-ai-proxy.vercel.app'
+    aiApiUrl = 'http://120.46.35.101:3000'
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -231,7 +231,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                         正在生成总结...
                                     </div>
                                 ) : (
-                                    <div 
+                                    <div
                                         className="text-sm text-muted-foreground max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
                                         style={{
                                             scrollbarWidth: 'thin',
@@ -244,7 +244,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                             components={{
                                                 // 自定义样式
                                                 p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                code: ({ inline, children }) => 
+                                                code: ({ inline, children }) =>
                                                     inline ? (
                                                         <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{children}</code>
                                                     ) : (
@@ -277,7 +277,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                     {/* 消息列表容器 */}
                     <div className="flex-1 mb-4 relative min-h-0">
                         {/* 消息滚动区域 - 使用灰色滚动条 */}
-                        <div 
+                        <div
                             ref={scrollAreaRef}
                             className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 pr-2"
                             style={{
@@ -318,7 +318,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                                         components={{
                                                             // 针对 AI 消息的样式
                                                             p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                            code: ({ inline, children }) => 
+                                                            code: ({ inline, children }) =>
                                                                 inline ? (
                                                                     <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">{children}</code>
                                                                 ) : (

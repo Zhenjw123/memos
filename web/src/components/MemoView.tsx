@@ -265,7 +265,7 @@ const MemoView: React.FC<Props> = (props: Props) => {
         memo={memo}
         open={showAIChat}
         onOpenChange={setShowAIChat}
-        aiApiUrl="https://memo-ai-proxy.vercel.app" // 可以根据需要修改或从配置中读取
+        aiApiUrl="http://120.46.35.101:3000" // 可以根据需要修改或从配置中读取
       />
     </div>
   );
