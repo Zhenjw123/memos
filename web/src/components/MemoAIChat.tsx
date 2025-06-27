@@ -30,7 +30,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
     memo,
     open,
     onOpenChange,
-    aiApiUrl = 'http://120.46.35.101:3000'
+    aiApiUrl = 'https://memo-ai-proxy.vercel.app'
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -218,63 +218,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                 </DialogHeader>
 
                 <div className="flex-1 flex flex-col p-6 pt-0 min-h-0">
-                    {/* 总结区域 - 限制高度并添加滚动条 */}
-                    {(summary || isLoadingSummary) && (
-                        <Card className="mb-4 flex-shrink-0">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium">笔记总结</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                {isLoadingSummary ? (
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        正在生成总结...
-                                    </div>
-                                ) : (
-                                    <div 
-                                        className="text-sm text-muted-foreground max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
-                                        style={{
-                                            scrollbarWidth: 'thin',
-                                            scrollbarColor: '#9ca3af #e5e7eb'
-                                        }}
-                                    >
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm]}
-                                            rehypePlugins={[rehypeHighlight]}
-                                            components={{
-                                                // 自定义样式
-                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                code: ({ inline, children }) => 
-                                                    inline ? (
-                                                        <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{children}</code>
-                                                    ) : (
-                                                        <code className="block bg-gray-100 p-2 rounded text-xs overflow-x-auto">{children}</code>
-                                                    ),
-                                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-                                                li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-                                                h2: ({ children }) => <h2 className="text-md font-bold mb-2">{children}</h2>,
-                                                h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
-                                            }}
-                                        >
-                                            {summary}
-                                        </ReactMarkdown>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* 错误提示 */}
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700 flex-shrink-0">
-                            <AlertCircle className="w-4 h-4" />
-                            {error}
-                        </div>
-                    )}
-
-                    {/* 消息列表容器 */}
+                    {/* 消息列表容器（包含AI总结） */}
                     <div className="flex-1 mb-4 relative min-h-0">
                         {/* 消息滚动区域 - 使用灰色滚动条 */}
                         <div 
@@ -286,6 +230,54 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                             }}
                         >
                             <div className="space-y-4">
+                                {/* 总结区域 - 现在和消息一起滚动 */}
+                                {(summary || isLoadingSummary) && (
+                                    <Card className="flex-shrink-0">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm font-medium">笔记总结</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            {isLoadingSummary ? (
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    正在生成总结...
+                                                </div>
+                                            ) : (
+                                                <div 
+                                                    className="text-sm text-muted-foreground max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+                                                    style={{
+                                                        scrollbarWidth: 'thin',
+                                                        scrollbarColor: '#9ca3af #e5e7eb'
+                                                    }}
+                                                >
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        rehypePlugins={[rehypeHighlight]}
+                                                        components={{
+                                                            // 自定义样式
+                                                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                            code: ({ inline, children }) => 
+                                                                inline ? (
+                                                                    <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{children}</code>
+                                                                ) : (
+                                                                    <code className="block bg-gray-100 p-2 rounded text-xs overflow-x-auto">{children}</code>
+                                                                ),
+                                                            ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                                                            ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                                                            li: ({ children }) => <li className="mb-1">{children}</li>,
+                                                            h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                                                            h2: ({ children }) => <h2 className="text-md font-bold mb-2">{children}</h2>,
+                                                            h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
+                                                        }}
+                                                    >
+                                                        {summary}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
                                 {messages.length === 0 && (
                                     <div className="flex items-center justify-center h-32 text-gray-500 text-sm">
                                         开始与 AI 对话，了解更多关于这篇笔记的内容
@@ -324,7 +316,7 @@ const MemoAIChat: React.FC<MemoAIChatProps> = ({
                                                         components={{
                                                             // 针对 AI 消息的样式
                                                             p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                            code: ({ inline, children }) =>
+                                                            code: ({ inline, children }) => 
                                                                 inline ? (
                                                                     <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">{children}</code>
                                                                 ) : (
