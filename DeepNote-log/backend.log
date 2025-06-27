@@ -1,0 +1,7 @@
+Deep-Note/bin/memos/main.go:12:2: no required module provides package github.com/spf13/cobra: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:13:2: no required module provides package github.com/spf13/viper: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:15:2: no required module provides package github.com/usememos/memos/server: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:16:2: no required module provides package github.com/usememos/memos/server/profile: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:17:2: no required module provides package github.com/usememos/memos/server/version: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:18:2: no required module provides package github.com/usememos/memos/store: go.mod file not found in current directory or any parent directory; see 'go help modules'
+Deep-Note/bin/memos/main.go:19:2: no required module provides package github.com/usememos/memos/store/db: go.mod file not found in current directory or any parent directory; see 'go help modules'
