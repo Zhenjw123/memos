@@ -143,7 +143,7 @@ const MemoCommentMessage = ({ inbox }: Props) => {
         <div className="w-full flex flex-row items-center gap-2">
           <span
             className="cursor-pointer text-blue-600 hover:opacity-80"
-            onClick={() => navigateTo(`/u/${sender.name.split("/").pop()}`)}
+            onClick={() => navigateTo(`/u/${sender.username.split("/").pop()}`)}
           >
             {sender.nickname || sender.username}
           </span>
