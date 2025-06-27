@@ -1,9 +1,6 @@
 # temp folder
 tmp
 
-# Frontend asset
-
-
 # build folder
 build
 
@@ -15,9 +12,9 @@ build
 # Docker Compose Environment File
 .env
 
-
-
 # VSCode settings
 .vscode
 
 web/node_modules
+
+DeepNote-log
